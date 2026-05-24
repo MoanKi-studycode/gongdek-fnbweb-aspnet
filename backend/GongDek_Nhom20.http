@@ -1,0 +1,6 @@
+@GongDek_Nhom20_HostAddress = http://localhost:5256
+
+GET {{GongDek_Nhom20_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
