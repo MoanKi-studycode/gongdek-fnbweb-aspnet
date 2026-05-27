@@ -7,3 +7,17 @@ public class SizeDto
     public decimal PhuThu { get; set; }
     public string TrangThai { get; set; } = null!;
 }
+
+public class CreateSizeDto
+{
+    public string TenSize { get; set; } = null!;
+    public decimal PhuThu { get; set; }
+    public string TrangThai { get; set; } = "DangApDung";
+}
+
+public class UpdateSizeDto
+{
+    public string TenSize { get; set; } = null!;
+    public decimal PhuThu { get; set; }
+    public string TrangThai { get; set; } = "DangApDung";
+}

@@ -10,6 +10,7 @@ export interface SanPhamApi {
   moTa?: string | null;
   giaBanGoc: number;
   hinhAnh?: string | null;
+  ghiChuPhaChe?: string | null;
   trangThai: string;
 }
 

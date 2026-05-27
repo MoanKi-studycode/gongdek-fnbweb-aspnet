@@ -5,10 +5,8 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace GongDek_Nhom20.Controllers;
 
-/// <summary>API read-only topping — nền tảng hiển thị dữ liệu.</summary>
 [ApiController]
 [Route("api/topping")]
-[AllowAnonymous]
 public class ToppingController : ControllerBase
 {
     private readonly IToppingService _service;
@@ -18,11 +16,59 @@ public class ToppingController : ControllerBase
         _service = service;
     }
 
-  // API read-only tối thiểu để frontend hiển thị dữ liệu thật.
-  // TODO [Trần Quốc Tiên]: Hoàn thiện CRUD và nghiệp vụ quản lý sản phẩm sau.
     [HttpGet]
+    [AllowAnonymous]
     public async Task<ActionResult<List<ToppingDto>>> GetAll()
     {
         return Ok(await _service.GetAllAsync());
+    }
+
+    [HttpPost]
+    [Authorize(Policy = "QuanLy")]
+    public async Task<ActionResult<ToppingDto>> Create([FromBody] CreateToppingDto dto)
+    {
+        try
+        {
+            var result = await _service.CreateAsync(dto);
+            return CreatedAtAction(nameof(GetAll), new { id = result.MaTopping }, result);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [HttpPut("{id:int}")]
+    [Authorize(Policy = "QuanLy")]
+    public async Task<ActionResult<ToppingDto>> Update(int id, [FromBody] UpdateToppingDto dto)
+    {
+        try
+        {
+            var result = await _service.UpdateAsync(id, dto);
+            if (result == null) return NotFound(new { message = "Không tìm thấy topping." });
+
+            return Ok(result);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [HttpDelete("{id:int}")]
+    [Authorize(Policy = "QuanLy")]
+    public async Task<IActionResult> Delete(int id)
+    {
+        try
+        {
+            var success = await _service.DeleteAsync(id);
+            if (!success) return NotFound(new { message = "Không tìm thấy topping." });
+
+            return NoContent();
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
 }

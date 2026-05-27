@@ -68,7 +68,7 @@ export interface Voucher {
   expiryDate: string;
 }
 
-export type InventoryUnit = 'kg' | 'lít' | 'gói' | 'hộp' | 'chai';
+export type InventoryUnit = 'kg' | 'lít' | 'gói' | 'hộp' | 'chai' | 'cái';
 export type InventoryStatus = 'Đủ hàng' | 'Sắp hết' | 'Hết hàng';
 
 export interface InventoryItem {
