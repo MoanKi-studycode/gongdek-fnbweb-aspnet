@@ -1,4 +1,4 @@
-import { apiClient } from './apiClient';
+import { apiClient, postForm } from './apiClient';
 import { mapSanPhamToProduct, type SanPhamApi } from './apiMappers';
 import { resolveProductImageUrl } from '@/lib/productImage';
 import type { Product } from '@/types';
@@ -91,6 +91,14 @@ export async function updateProduct(id: number, payload: ProductPayload): Promis
 
 export async function deleteProduct(id: number): Promise<void> {
   await apiClient.delete<void>(`/san-pham/${id}`);
+}
+
+/** Upload ảnh sản phẩm lên server (wwwroot) và cập nhật HinhAnh. */
+export async function uploadProductImage(id: number, file: File): Promise<AdminProduct> {
+  const formData = new FormData();
+  formData.append('file', file);
+  const data = await postForm<SanPhamApi>(`/san-pham/${id}/upload-anh`, formData);
+  return mapAdminProduct(data);
 }
 
 /** @deprecated Dùng categoryService.getCategories() */

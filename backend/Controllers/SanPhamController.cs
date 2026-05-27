@@ -83,4 +83,21 @@ public class SanPhamController : ControllerBase
             return Conflict(new { message = ex.Message });
         }
     }
+
+    /// <summary>POST /api/san-pham/{id}/upload-anh — upload ảnh sản phẩm (lưu wwwroot + cập nhật HinhAnh).</summary>
+    [HttpPost("{id:int}/upload-anh")]
+    [Authorize(Policy = "QuanLy")]
+    [RequestSizeLimit(5 * 1024 * 1024)]
+    public async Task<ActionResult<SanPhamDto>> UploadImage(int id, IFormFile file, [FromServices] IWebHostEnvironment env)
+    {
+        try
+        {
+            var result = await _service.UploadImageAsync(id, file, env);
+            return result == null ? NotFound(new { message = "Không tìm thấy sản phẩm." }) : Ok(result);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
 }

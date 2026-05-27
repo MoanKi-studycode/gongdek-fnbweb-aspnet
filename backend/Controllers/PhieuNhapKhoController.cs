@@ -8,6 +8,7 @@ namespace GongDek_Nhom20.Controllers;
 
 [ApiController]
 [Route("api/phieu-nhap-kho")]
+[Authorize(Policy = "QuanLy")]
 public class PhieuNhapKhoController : ControllerBase
 {
     private readonly IPhieuNhapKhoService _service;
@@ -36,7 +37,6 @@ public class PhieuNhapKhoController : ControllerBase
     }
 
     [HttpPost]
-    //[Authorize(Policy = "QuanLy")]
     public async Task<ActionResult<PhieuNhapKhoDto>> Create([FromBody] CreatePhieuNhapKhoDto dto)
     {
         var user = JwtHelper.GetUserFromClaims(User);
@@ -45,7 +45,6 @@ public class PhieuNhapKhoController : ControllerBase
     }
 
     [HttpPut("{id:int}")]
-    //[Authorize(Policy = "QuanLy")]
     public async Task<ActionResult<PhieuNhapKhoDto>> Update(int id, [FromBody] UpdatePhieuNhapKhoDto dto)
     {
         var result = await _service.UpdateAsync(id, dto);
@@ -53,7 +52,6 @@ public class PhieuNhapKhoController : ControllerBase
     }
 
     [HttpPut("{id:int}/huy")]
-    //[Authorize(Policy = "QuanLy")]
     public async Task<ActionResult<PhieuNhapKhoDto>> Cancel(int id, [FromBody] UpdateTrangThaiPhieuNhapDto dto)
     {
         var result = await _service.CancelAsync(id, dto.GhiChu);
@@ -63,7 +61,6 @@ public class PhieuNhapKhoController : ControllerBase
 
 
     [HttpPut("{id:int}/duyet")]
-    [Authorize(Policy = "QuanLy")]
     public async Task<ActionResult<PhieuNhapKhoDto>> Approve(int id, [FromBody] UpdateTrangThaiPhieuNhapDto dto)
     {
         var user = JwtHelper.GetUserFromClaims(User);
@@ -72,7 +69,6 @@ public class PhieuNhapKhoController : ControllerBase
     }
 
     [HttpDelete("{id:int}")]
-    [Authorize(Policy = "QuanLy")]
     public async Task<IActionResult> Delete(int id)
     {
         await _service.DeleteAsync(id);

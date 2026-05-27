@@ -85,14 +85,16 @@ frontend/src/
 
 ---
 
-## 2. Trần Quốc Tiên — cần tiếp tục
+## 2. Trần Quốc Tiên — đã hoàn thành (đã merge `main`)
 
-### Nghiệp vụ còn lại
-- CRUD: danh mục, sản phẩm, size, topping (hiện **GET only**)
-- Upload ảnh SP (`/images/products/{maSanPham}.jpg`)
-- Nguyên liệu, nhà cung cấp
-- Lập / duyệt phiếu nhập kho, cập nhật tồn
-- Tìm kiếm sản phẩm theo từ khóa (backend `search`)
+### Nghiệp vụ đã triển khai
+- CRUD: danh mục, sản phẩm, size, topping
+- Upload ảnh SP: `POST /api/san-pham/{id}/upload-anh` + `ProductImagePaths`
+- Nguyên liệu, nhà cung cấp (CRUD, cảnh báo tồn, điều chỉnh tồn)
+- Lập / sửa / hủy / duyệt phiếu nhập kho, cập nhật tồn khi duyệt
+- Tìm kiếm sản phẩm: `GET /api/san-pham?search=`
+- Seed mẫu: `NguyenLieu`, `NhaCungCap`, `PhieuNhapKho` trong `database/seed.sql`
+- Frontend admin: Categories, Products, Size/Topping, Inventory, StockIn gọi API
 
 ### Cây file hiện có
 
@@ -124,14 +126,14 @@ frontend/src/
 └── lib/productImage.ts
 ```
 
-### Cần bổ sung (đề xuất)
+### API chính (module Quốc Tiên)
 
-```text
-backend/Controllers/PhieuNhapKhoController.cs
-backend/Services/PhieuNhapKhoService.cs
-backend/Services/NguyenLieuService.cs
-POST/PUT/DELETE trên DanhMuc, SanPham, Size, Topping
-```
+| Method | Endpoint |
+|--------|----------|
+| CRUD | `/api/danh-muc`, `/api/san-pham`, `/api/size`, `/api/topping` |
+| Upload ảnh | `POST /api/san-pham/{id}/upload-anh` |
+| Kho | `/api/nguyen-lieu`, `/api/nha-cung-cap`, `/api/phieu-nhap-kho` |
+| Duyệt phiếu | `PUT /api/phieu-nhap-kho/{id}/duyet` |
 
 ---
 

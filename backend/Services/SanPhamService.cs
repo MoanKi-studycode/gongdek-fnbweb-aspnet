@@ -1,5 +1,6 @@
 using GongDek_Nhom20.Data;
 using GongDek_Nhom20.DTOs.CatalogDtos;
+using GongDek_Nhom20.Helpers;
 using GongDek_Nhom20.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -140,6 +141,46 @@ public class SanPhamService : ISanPhamService
         _context.SanPhams.Remove(entity);
         await _context.SaveChangesAsync();
         return true;
+    }
+
+    public async Task<SanPhamDto?> UploadImageAsync(int id, IFormFile file, IWebHostEnvironment env)
+    {
+        var entity = await _context.SanPhams.FirstOrDefaultAsync(s => s.MaSanPham == id);
+        if (entity == null)
+        {
+            return null;
+        }
+
+        if (file == null || file.Length == 0)
+        {
+            throw new ArgumentException("Vui lòng chọn file ảnh.");
+        }
+
+        var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+        if (extension is not ".jpg" and not ".jpeg" and not ".png" and not ".webp")
+        {
+            throw new ArgumentException("Chỉ chấp nhận ảnh jpg, png hoặc webp.");
+        }
+
+        var extForFile = extension == ".jpeg" ? "jpg" : extension.TrimStart('.');
+        ProductImagePaths.EnsureStorageDirectory(env);
+        var directory = ProductImagePaths.GetPhysicalDirectory(env);
+
+        foreach (var oldFile in Directory.GetFiles(directory, $"{id}.*"))
+        {
+            File.Delete(oldFile);
+        }
+
+        var physicalPath = ProductImagePaths.GetPhysicalPath(env, id, extForFile);
+        await using (var stream = new FileStream(physicalPath, FileMode.Create))
+        {
+            await file.CopyToAsync(stream);
+        }
+
+        entity.HinhAnh = ProductImagePaths.BuildUrl(id, extForFile);
+        await _context.SaveChangesAsync();
+
+        return await GetByIdAsync(id);
     }
 
     private async Task ValidatePayloadAsync(string? tenSanPham, int maDanhMuc, decimal giaBanGoc, string? trangThai, int? currentId = null)

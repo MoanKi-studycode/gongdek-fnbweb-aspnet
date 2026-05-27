@@ -138,14 +138,14 @@ Nhân viên **không** tách role ThuNgan/Barista — một tài khoản `NhanVi
 - Đặt hàng online cơ bản: `POST /api/don-hang-online` (khách đăng nhập)
 - Frontend: trang chủ, giỏ hàng, auth, admin dashboard/nhân viên/ca/báo cáo, layout role
 
-### Trần Quốc Tiên (cần tiếp tục)
+### Trần Quốc Tiên (đã hoàn thành — đã merge `main`)
 
-- CRUD đầy đủ: danh mục, sản phẩm, size, topping (hiện chỉ GET)
-- Upload ảnh sản phẩm (`ProductImagePaths`, thư mục `public/images/products/`)
-- Quản lý nguyên liệu, nhà cung cấp
-- Lập phiếu nhập kho, duyệt phiếu, cập nhật tồn kho
-- Tìm kiếm sản phẩm theo từ khóa (backend)
-- Frontend admin: Products/Categories/Inventory/StockIn — hiện UI có, một số thao tác ghi local chưa gọi API write
+- CRUD danh mục, sản phẩm, size, topping
+- Upload ảnh: `POST /api/san-pham/{id}/upload-anh`
+- Nguyên liệu, nhà cung cấp, phiếu nhập kho (lập / duyệt / cập nhật tồn)
+- Tìm kiếm sản phẩm: `GET /api/san-pham?search=`
+- Frontend admin: Products, Categories, Inventory, StockIn, Size/Topping
+- Seed mẫu kho trong `database/seed.sql`
 
 ### Nguyễn Hoài Phương (cần tiếp tục)
 
@@ -177,14 +177,18 @@ Nhân viên **không** tách role ThuNgan/Barista — một tài khoản `NhanVi
 | GET | `/api/bao-cao/doanh-thu/excel` | Export Excel |
 | GET | `/api/bao-cao/doanh-thu/pdf` | Export PDF |
 
-### Catalog (AllowAnonymous — GET)
+### Catalog & kho
 
 | Method | Endpoint | Mô tả |
 |--------|----------|--------|
-| GET | `/api/danh-muc` | Danh mục |
-| GET | `/api/san-pham?maDanhMuc=` | Sản phẩm |
-| GET | `/api/size` | Size |
-| GET | `/api/topping` | Topping |
+| GET/POST/PUT/DELETE | `/api/danh-muc` | Danh mục (write: QuanLy) |
+| GET/POST/PUT/DELETE | `/api/san-pham` | Sản phẩm + `?search=` |
+| POST | `/api/san-pham/{id}/upload-anh` | Upload ảnh (QuanLy) |
+| GET/POST/PUT/DELETE | `/api/size`, `/api/topping` | Size, topping |
+| GET/POST/PUT/DELETE | `/api/nguyen-lieu` | Nguyên liệu |
+| GET/POST/PUT/DELETE | `/api/nha-cung-cap` | Nhà cung cấp |
+| GET/POST/PUT/DELETE | `/api/phieu-nhap-kho` | Phiếu nhập |
+| PUT | `/api/phieu-nhap-kho/{id}/duyet` | Duyệt phiếu, cộng tồn |
 
 ### Hóa đơn & đơn online
 

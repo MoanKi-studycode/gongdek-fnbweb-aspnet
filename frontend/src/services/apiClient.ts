@@ -53,6 +53,27 @@ async function request<T>(method: HttpMethod, path: string, options: RequestOpti
   return response.json() as Promise<T>;
 }
 
+/** POST multipart/form-data (upload file). */
+export async function postForm<T>(path: string, formData: FormData): Promise<T> {
+  const token = getAuthToken();
+  const headers: Record<string, string> = {};
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
+  const response = await fetch(`${BASE_URL}${path}`, {
+    method: 'POST',
+    headers,
+    body: formData,
+  });
+
+  if (!response.ok) {
+    throw new Error(await parseErrorMessage(response));
+  }
+
+  return response.json() as Promise<T>;
+}
+
 export const apiClient = {
   get: <T>(path: string) => request<T>('GET', path),
   post: <T>(path: string, body?: unknown) => request<T>('POST', path, { body }),

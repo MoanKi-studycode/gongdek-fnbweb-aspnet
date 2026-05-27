@@ -34,9 +34,11 @@ import {
   deleteProduct,
   getAdminProducts,
   updateProduct,
+  uploadProductImage,
   type AdminProduct,
   type ProductStatus,
 } from '@/services/productService';
+import { resolveProductImageUrl } from '@/lib/productImage';
 import { getCategories, type Category } from '@/services/categoryService';
 import { toast } from 'sonner';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
@@ -74,6 +76,7 @@ export function ProductsPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<AdminProduct | null>(null);
   const [formData, setFormData] = useState({ ...EMPTY_FORM });
+  const [imageFile, setImageFile] = useState<File | null>(null);
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('vi-VN', {
@@ -135,6 +138,7 @@ export function ProductsPage() {
       setEditingProduct(null);
       setFormData({ ...EMPTY_FORM });
     }
+    setImageFile(null);
     setIsDialogOpen(true);
   };
 
@@ -171,12 +175,18 @@ export function ProductsPage() {
 
     try {
       const payload = buildPayload();
+      let saved: AdminProduct;
       if (editingProduct) {
-        await updateProduct(editingProduct.maSanPham, payload);
+        saved = await updateProduct(editingProduct.maSanPham, payload);
         toast.success('Cập nhật sản phẩm thành công!');
       } else {
-        await createProduct(payload);
+        saved = await createProduct(payload);
         toast.success('Thêm sản phẩm thành công!');
+      }
+
+      if (imageFile) {
+        await uploadProductImage(saved.maSanPham, imageFile);
+        toast.success('Đã upload ảnh sản phẩm.');
       }
 
       setIsDialogOpen(false);
@@ -429,15 +439,32 @@ export function ProductsPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="hinhAnh">Đường dẫn ảnh</Label>
+                <Label htmlFor="hinhAnh">Ảnh sản phẩm</Label>
+                <Input
+                  id="imageFile"
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  onChange={(e) => setImageFile(e.target.files?.[0] ?? null)}
+                />
+                {(imageFile || editingProduct?.hinhAnh) && (
+                  <img
+                    src={
+                      imageFile
+                        ? URL.createObjectURL(imageFile)
+                        : resolveProductImageUrl(editingProduct?.hinhAnh, editingProduct?.maSanPham)
+                    }
+                    alt="Xem trước"
+                    className="h-24 w-24 rounded-md object-cover border"
+                  />
+                )}
                 <Input
                   id="hinhAnh"
                   value={formData.hinhAnh}
                   onChange={(e) => setFormData({ ...formData, hinhAnh: e.target.value })}
-                  placeholder="/images/products/1.jpg hoặc ten-file.jpg"
+                  placeholder="/images/products/1.jpg (tùy chọn nếu không upload file)"
                 />
                 <p className="text-xs text-gray-500">
-                  Bước này mới lưu đường dẫn ảnh. Upload file ảnh thật sẽ làm ở bước upload ảnh sản phẩm.
+                  Chọn file ảnh để upload lên server, hoặc nhập đường dẫn thủ công.
                 </p>
               </div>
 

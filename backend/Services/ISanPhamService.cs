@@ -9,4 +9,5 @@ public interface ISanPhamService
     Task<SanPhamDto> CreateAsync(CreateSanPhamDto dto);
     Task<SanPhamDto?> UpdateAsync(int id, UpdateSanPhamDto dto);
     Task<bool> DeleteAsync(int id);
+    Task<SanPhamDto?> UploadImageAsync(int id, IFormFile file, IWebHostEnvironment env);
 }
