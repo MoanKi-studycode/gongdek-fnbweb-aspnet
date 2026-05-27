@@ -4,8 +4,6 @@
 
 Hệ thống quản lý cửa hàng trà sữa **GongDek Tea & Coffee**, hỗ trợ bán hàng tại quầy (POS), đặt hàng online, quản trị nội bộ và báo cáo doanh thu. Dự án gồm backend ASP.NET Core Web API và frontend React, phân quyền theo ba vai trò: **QuanLy**, **NhanVien**, **KhachHang**.
 
-Tài liệu thiết kế xử lý nghiệp vụ (mục 2.2 báo cáo): [docs/HamXuLy.md](docs/HamXuLy.md).
-
 ## 2. Thông tin cửa hàng
 
 | Mục | Nội dung |
@@ -52,10 +50,6 @@ GongDek_Nhom20/
 ├── database/
 │   ├── schema.sql           # Tạo CSDL + constraint/view/function/procedure
 │   └── seed.sql             # Dữ liệu mẫu (UTF-8)
-├── docs/
-│   ├── HamXuLy.md           # Hàm xử lý nghiệp vụ (báo cáo 2.2)
-│   ├── MODULE_STRUCTURE.md  # Phân công module theo thành viên
-│   └── API_CONTRACT.md      # Hợp đồng API
 └── README.md
 ```
 
@@ -64,7 +58,6 @@ GongDek_Nhom20/
 - **backend/** — Toàn bộ logic server, API, bảo mật, export.
 - **frontend/** — Giao diện khách (trang chủ, giỏ hàng), admin, nhân viên POS.
 - **database/** — Script SQL tạo và seed database; không dùng `SeedData.cs`.
-- **docs/** — Tài liệu phục vụ báo cáo và phối hợp nhóm.
 
 ## 5. Cách tạo database
 
@@ -147,12 +140,11 @@ Nhân viên **không** tách role ThuNgan/Barista — một tài khoản `NhanVi
 - Frontend admin: Products, Categories, Inventory, StockIn, Size/Topping
 - Seed mẫu kho trong `database/seed.sql`
 
-### Nguyễn Hoài Phương (cần tiếp tục)
+### Nguyễn Hoài Phương (sẽ cập nhật sau)
 
-- POS tại quầy: tạo hóa đơn, thanh toán (frontend POS hiện mô phỏng)
+- POS tại quầy: tạo hóa đơn, thanh toán
 - Workflow đơn online: xác nhận, cập nhật trạng thái, pha chế, giao hàng
 - Voucher, khách hàng CRUD, đánh giá sản phẩm, hoàn/hủy đơn
-- Frontend: POSOrdersOnlinePage xử lý trạng thái qua API write
 
 ## 11. API chính
 
@@ -220,8 +212,3 @@ cd ..\frontend
 npm run build
 ```
 
-## 14. Tài liệu liên quan
-
-- [docs/HamXuLy.md](docs/HamXuLy.md) — 20 hàm xử lý nghiệp vụ (mục 2.2 báo cáo)
-- [docs/MODULE_STRUCTURE.md](docs/MODULE_STRUCTURE.md) — Phân công và cây file theo module
-- [docs/API_CONTRACT.md](docs/API_CONTRACT.md) — Chi tiết hợp đồng API
