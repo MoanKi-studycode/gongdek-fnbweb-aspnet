@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { AdminLayout } from '@/components/layout/AdminLayout';
-import { ModuleNotice } from '@/components/common/ModuleNotice';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -164,8 +163,6 @@ export function CategoriesPage() {
             Thêm danh mục
           </Button>
         </div>
-
-        <ModuleNotice owner="Trần Quốc Tiên" module="quản lý danh mục" />
 
         <Card>
           <CardContent className="p-6">

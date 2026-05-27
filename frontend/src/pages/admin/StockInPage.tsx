@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
 import { AdminLayout } from '@/components/layout/AdminLayout';
-import { ModuleNotice } from '@/components/common/ModuleNotice';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -273,7 +272,6 @@ export function StockInPage() {
   return (
     <AdminLayout>
       <div className="p-4 md:p-8">
-        <ModuleNotice owner="Trần Quốc Tiên" module="lập phiếu nhập kho" />
 
         <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>

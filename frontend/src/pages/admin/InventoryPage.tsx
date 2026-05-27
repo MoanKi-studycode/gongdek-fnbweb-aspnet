@@ -1,6 +1,5 @@
 import { type FormEvent, useEffect, useMemo, useState } from 'react';
 import { AdminLayout } from '@/components/layout/AdminLayout';
-import { ModuleNotice } from '@/components/common/ModuleNotice';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -321,7 +320,6 @@ export function InventoryPage() {
   return (
     <AdminLayout>
       <div className="p-8">
-        <ModuleNotice owner="Trần Quốc Tiên" module="quản lý kho nguyên liệu" />
 
         <div className="flex items-center justify-between mb-8">
           <div>

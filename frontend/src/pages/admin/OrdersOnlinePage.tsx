@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { AdminLayout } from '@/components/layout/AdminLayout';
-import { ModuleNotice } from '@/components/common/ModuleNotice';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
@@ -129,8 +128,6 @@ export function OrdersOnlinePage() {
           <h1 className="text-3xl font-bold text-gray-900">Quản lý đơn online</h1>
           <p className="text-gray-600 mt-1">Quản lý đơn hàng đặt online</p>
         </div>
-
-        <ModuleNotice owner="Nguyễn Hoài Phương" module="quản lý đơn online" />
 
         <Tabs value={selectedStatus} onValueChange={(v) => setSelectedStatus(v as any)}>
           <TabsList className="mb-6">

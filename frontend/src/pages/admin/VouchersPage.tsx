@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { AdminLayout } from '@/components/layout/AdminLayout';
-import { ModuleNotice } from '@/components/common/ModuleNotice';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -152,8 +151,6 @@ export function VouchersPage() {
             Tạo voucher mới
           </Button>
         </div>
-
-        <ModuleNotice owner="Nguyễn Hoài Phương" module="quản lý voucher" />
 
         <Card>
           <CardContent className="p-6">

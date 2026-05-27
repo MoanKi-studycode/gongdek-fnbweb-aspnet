@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { AdminLayout } from '@/components/layout/AdminLayout';
-import { ModuleNotice } from '@/components/common/ModuleNotice';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -249,8 +248,6 @@ export function SizeToppingPage() {
             Tải lại
           </Button>
         </div>
-
-        <ModuleNotice owner="Trần Quốc Tiên" module="quản lý size & topping" />
 
         <Tabs defaultValue="size" className="space-y-6">
           <TabsList>
