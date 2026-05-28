@@ -1,10 +1,21 @@
+using System.Collections.Generic;
+
 namespace GongDek_Nhom20.DTOs.OrderWrite;
 
-/// <summary>Dữ liệu đặt hàng online từ khách — không gửi MaKH.</summary>
+/// <summary>Dữ liệu đặt hàng online từ khách HOẶC đơn tạo tại quầy (POS) từ nhân viên.</summary>
 public class CreateDonHangOnlineDto
 {
-    public string DiaChiGiao { get; set; } = null!;
+    // --- Các trường dành cho đơn Online ---
+    public string? DiaChiGiao { get; set; }
     public string? GhiChuGiaoHang { get; set; }
+
+    // --- CÁC TRƯỜNG BỔ SUNG 
+    public string? LoaiDonHang { get; set; } // "Online" hoặc "TaiQuay"
+    public string? SoDienThoaiKhachHang { get; set; } // Để tích điểm khách hàng thành viên
+    public string? MaVoucher { get; set; } // Mã giảm giá áp dụng (Ví dụ: GIAM20K)
+    public string? PhuongThucThanhToan { get; set; } // "TienMat" hoặc "ChuyenKhoan"
+
+    // --- Danh sách chi tiết món ăn ---
     public List<CreateDonHangOnlineChiTietDto> ChiTiet { get; set; } = new();
 }
 
@@ -19,6 +30,7 @@ public class CreateDonHangOnlineChiTietDto
 
 public class CreateDonHangOnlineResultDto
 {
-    public int MaHoaDon { get; set; }
-    public string TrangThaiOnline { get; set; } = null!;
+    public int MaDonHang { get; set; }
+    public string TrangThai { get; set; } = null!;
+    public decimal TongTien { get; set; }
 }
