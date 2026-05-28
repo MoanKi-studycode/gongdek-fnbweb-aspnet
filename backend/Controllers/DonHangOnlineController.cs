@@ -44,34 +44,34 @@ public class DonHangOnlineController : ControllerBase
     [Authorize(Policy = "KhachHang")]
     public async Task<ActionResult<CreateDonHangOnlineResultDto>> Create([FromBody] CreateDonHangOnlineDto dto)
     {
+        dto.LoaiDonHang = "Online"; // Định danh luồng đơn đặt từ App/Web khách hàng
         var result = await _writeService.CreateAsync(User, dto);
         return StatusCode(StatusCodes.Status201Created, result);
     }
 
     
+    // Bổ Sung
+
 
     /// <summary>POST /api/don-hang-online/pos-checkout — Nhân viên tạo đơn và thanh toán trực tiếp tại quầy.</summary>
     [HttpPost("pos-checkout")]
     [Authorize(Policy = "NoiBo")]
-    public async Task<IActionResult> PosCheckout([FromBody] CreateDonHangOnlineDto dto)
+    public async Task<ActionResult<CreateDonHangOnlineResultDto>> PosCheckout([FromBody] CreateDonHangOnlineDto dto)
     {
-  
-    
         if (dto == null)
         {
             return BadRequest("Dữ liệu đơn hàng tại quầy không hợp lệ.");
         }
 
-        // Tạm thời gọi writeService giả định hoặc trả về thành công để Tín duyệt cấu trúc luồng
-        return Ok(new { 
-            message = "Thanh toán hóa đơn tại quầy (POS) thành công!", 
-            loaiDonHang = "TaiQuay",
-            trangThai = "HoanThanh" 
-        });
+        
+        dto.LoaiDonHang = "TaiQuay"; 
+
+        
+        var result = await _writeService.CreateAsync(User, dto);
+        return StatusCode(StatusCodes.Status201Created, result);
     }
 
-    /// <summary>PUT /api/don-hang-online/{id}/update-status — Cập nhật trạng thái tuần tự của đơn hàng.</summary>
-    /// <param name="trangThaiMoi">Các giá trị hợp lệ: ChoXacNhan, DaXacNhan, DangPhaChe, DangGiao, HoanThanh, DaHuy</param>
+    
     [HttpPut("{id:int}/update-status")]
     [Authorize(Policy = "NoiBo")]
     public async Task<IActionResult> UpdateWorkflowStatus(int id, [FromBody] string trangThaiMoi)
@@ -81,7 +81,14 @@ public class DonHangOnlineController : ControllerBase
             return BadRequest("Trạng thái mới không được để trống.");
         }
 
-        // Ghi chú cho Tín: Chỗ này Phương sẽ cùng Tín bổ sung hàm UpdateStatusAsync vào IDonHangOnlineWriteService sau nhé
+        
+        var result = await _writeService.UpdateStatusAsync(id, trangThaiMoi);
+        
+        if (!result)
+        {
+            return NotFound($"Không tìm thấy đơn hàng mã số {id} hoặc cập nhật thất bại.");
+        }
+
         return Ok(new { 
             message = $"Đơn hàng mã số {id} đã được nhân viên cập nhật trạng thái sang: {trangThaiMoi} thành công." 
         });
@@ -92,7 +99,19 @@ public class DonHangOnlineController : ControllerBase
     [Authorize(Policy = "NoiBo")]
     public async Task<IActionResult> CancelOrder(int id, [FromBody] string lyDoHuy)
     {
-        // Chức năng hủy đơn online/tại quầy của Phương, kết hợp hoàn nguyên kho nguyên liệu với Tiến
+        if (string.IsNullOrEmpty(lyDoHuy))
+        {
+            return BadRequest("Lý do hủy đơn không được để trống.");
+        }
+
+        // bổ sung 
+        var result = await _writeService.UpdateStatusAsync(id, "DaHuy", lyDoHuy);
+
+        if (!result)
+        {
+            return NotFound($"Không tìm thấy đơn hàng mã số {id} để tiến hành hủy.");
+        }
+
         return Ok(new { 
             message = $"Đã hủy đơn hàng số {id} thành công.", 
             lyDo = lyDoHuy,
