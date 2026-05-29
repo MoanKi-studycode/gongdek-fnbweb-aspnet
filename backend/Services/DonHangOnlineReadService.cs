@@ -16,8 +16,6 @@ public class DonHangOnlineReadService : IDonHangOnlineReadService
         _hoaDonReadService = hoaDonReadService;
     }
 
-  // API read-only tối thiểu để frontend hiển thị dữ liệu thật.
-  // TODO [Nguyễn Hoài Phương]: Hoàn thiện nghiệp vụ hóa đơn / đơn online sau.
     public async Task<List<DonHangOnlineListDto>> GetAllAsync(string? trangThai)
     {
         var query = _context.DonHangOnlines

@@ -6,6 +6,7 @@ import { getProducts } from '@/services/productService';
 import { getToppings } from '@/services/toppingService';
 import { findCustomerByPhone } from '@/services/customerService';
 import { findVoucherByCode, isVoucherValid } from '@/services/voucherService';
+import { posCheckout } from '@/services/onlineOrderService';
 import { Product, Topping } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -168,21 +169,41 @@ export function POSPage() {
     }
   };
 
-  const handleCheckout = () => {
+  const handleCheckout = async () => {
     if (orderItems.length === 0) {
       toast.error('Chưa có món nào trong đơn hàng');
       return;
     }
 
-    // Demo: Show success and clear order
+    const paymentMap = {
+      cash: 'TienMat' as const,
+      transfer: 'ChuyenKhoan' as const,
+      ewallet: 'ViDienTu' as const,
+    };
+
     setCheckoutSuccess(true);
-    setTimeout(() => {
+    try {
+      const result = await posCheckout({
+        soDienThoaiKhachHang: customerPhone || customer?.phone,
+        maVoucher: voucher?.code,
+        phuongThucThanhToan: paymentMap[paymentMethod],
+        chiTiet: orderItems.map((item) => ({
+          maSanPham: Number(item.product.id),
+          tenSize: item.size,
+          soLuong: item.quantity,
+          ghiChu: item.notes || undefined,
+          maToppings: item.toppings.map((t) => Number(t.id)),
+        })),
+      });
       clearOrder();
       setCustomerPhone('');
       setVoucherCode('');
+      toast.success(`Thanh toán thành công! Mã hóa đơn #${result.maHoaDon}`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Thanh toán thất bại');
+    } finally {
       setCheckoutSuccess(false);
-      toast.success('Thanh toán thành công!');
-    }, 2000);
+    }
   };
 
   const handleLogout = async () => {

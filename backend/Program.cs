@@ -45,6 +45,9 @@ builder.Services.AddScoped<IPhieuNhapKhoService, PhieuNhapKhoService>();
 builder.Services.AddScoped<IHoaDonReadService, HoaDonReadService>();
 builder.Services.AddScoped<IDonHangOnlineReadService, DonHangOnlineReadService>();
 builder.Services.AddScoped<IDonHangOnlineWriteService, DonHangOnlineWriteService>();
+builder.Services.AddScoped<IKhachHangService, KhachHangService>();
+builder.Services.AddScoped<IVoucherService, VoucherService>();
+builder.Services.AddScoped<IDanhGiaService, DanhGiaService>();
 
 var jwtSettings = builder.Configuration.GetSection("Jwt").Get<JwtSettings>()
     ?? throw new InvalidOperationException("Thiếu cấu hình Jwt trong appsettings.json");

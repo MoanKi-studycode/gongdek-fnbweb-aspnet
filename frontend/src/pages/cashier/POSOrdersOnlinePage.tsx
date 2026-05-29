@@ -35,6 +35,8 @@ import {
   getOnlineOrders,
   getOrderStatusLabel,
   getOrderStatusColor,
+  updateOnlineOrderStatus,
+  cancelOnlineOrder,
   type OnlineOrder,
   type OrderStatus,
 } from '@/services/onlineOrderService';
@@ -109,7 +111,7 @@ export function POSOrdersOnlinePage() {
     setIsDetailOpen(true);
   };
 
-  const handleUpdateStatus = () => {
+  const handleUpdateStatus = async () => {
     if (!selectedOrder) return;
 
     if (newStatus === 'DA_HUY' && !cancelReason.trim()) {
@@ -117,21 +119,19 @@ export function POSOrdersOnlinePage() {
       return;
     }
 
-    setOrders(
-      orders.map((order) =>
-        order.id === selectedOrder.id
-          ? {
-              ...order,
-              status: newStatus,
-              notes: newStatus === 'DA_HUY' ? cancelReason : order.notes,
-              updatedAt: new Date().toISOString(),
-            }
-          : order
-      )
-    );
-
-    toast.success(`Cập nhật trạng thái thành công: ${getOrderStatusLabel(newStatus)}`);
-    setIsDetailOpen(false);
+    try {
+      if (newStatus === 'DA_HUY') {
+        await cancelOnlineOrder(selectedOrder.id, cancelReason);
+      } else {
+        await updateOnlineOrderStatus(selectedOrder.id, newStatus);
+      }
+      const refreshed = await getOnlineOrders();
+      setOrders(refreshed);
+      toast.success(`Cập nhật trạng thái thành công: ${getOrderStatusLabel(newStatus)}`);
+      setIsDetailOpen(false);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Cập nhật thất bại');
+    }
   };
 
   const handleLogout = async () => {

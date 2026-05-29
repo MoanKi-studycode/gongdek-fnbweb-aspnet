@@ -28,7 +28,7 @@ import {
 } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
 import { Plus, Edit, Trash2, Ticket } from 'lucide-react';
-import { getVouchers } from '@/services/voucherService';
+import { getVouchers, createVoucher, updateVoucher, deleteVoucher } from '@/services/voucherService';
 import type { Voucher } from '@/types';
 import { toast } from 'sonner';
 
@@ -92,49 +92,42 @@ export function VouchersPage() {
     setIsDialogOpen(true);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const payload = {
+      maCode: formData.code,
+      moTa: formData.name,
+      loaiGiam: formData.type,
+      giaTriGiam: parseFloat(formData.value),
+      donHangToiThieu: parseFloat(formData.minOrder) || 0,
+      giamToiDa: formData.maxDiscount ? parseFloat(formData.maxDiscount) : undefined,
+      ngayBatDau: '2026-01-01',
+      ngayKetThuc: formData.expiryDate,
+    };
 
-    if (editingVoucher) {
-      setVouchers(
-        vouchers.map((v) =>
-          v.id === editingVoucher.id
-            ? {
-                ...v,
-                code: formData.code,
-                name: formData.name,
-                type: formData.type,
-                value: parseFloat(formData.value),
-                minOrder: parseFloat(formData.minOrder),
-                maxDiscount: formData.maxDiscount ? parseFloat(formData.maxDiscount) : undefined,
-                expiryDate: formData.expiryDate,
-              }
-            : v
-        )
-      );
-      toast.success('Cập nhật voucher thành công!');
-    } else {
-      const newVoucher: Voucher = {
-        id: (vouchers.length + 1).toString(),
-        code: formData.code,
-        name: formData.name,
-        type: formData.type,
-        value: parseFloat(formData.value),
-        minOrder: parseFloat(formData.minOrder),
-        maxDiscount: formData.maxDiscount ? parseFloat(formData.maxDiscount) : undefined,
-        expiryDate: formData.expiryDate,
-      };
-      setVouchers([...vouchers, newVoucher]);
-      toast.success('Thêm voucher thành công!');
+    try {
+      if (editingVoucher) {
+        await updateVoucher(editingVoucher.id, payload);
+        toast.success('Cập nhật voucher thành công!');
+      } else {
+        await createVoucher(payload);
+        toast.success('Thêm voucher thành công!');
+      }
+      setVouchers(await getVouchers());
+      setIsDialogOpen(false);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Lưu voucher thất bại');
     }
-
-    setIsDialogOpen(false);
   };
 
-  const handleDelete = (id: string) => {
-    if (confirm('Bạn có chắc muốn xóa voucher này?')) {
-      setVouchers(vouchers.filter((v) => v.id !== id));
+  const handleDelete = async (id: string) => {
+    if (!confirm('Bạn có chắc muốn xóa voucher này?')) return;
+    try {
+      await deleteVoucher(id);
+      setVouchers(await getVouchers());
       toast.success('Xóa voucher thành công!');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Xóa voucher thất bại');
     }
   };
 

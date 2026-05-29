@@ -1,25 +1,25 @@
 using GongDek_Nhom20.DTOs.OrderReadDtos;
 using GongDek_Nhom20.Services;
+using GongDek_Nhom20.Services.Export;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace GongDek_Nhom20.Controllers;
 
-/// <summary>API read-only hóa đơn — nền tảng hiển thị dữ liệu.</summary>
 [ApiController]
 [Route("api/hoa-don")]
 [Authorize(Policy = "NoiBo")]
 public class HoaDonController : ControllerBase
 {
     private readonly IHoaDonReadService _service;
+    private readonly IPdfExportService _pdfExportService;
 
-    public HoaDonController(IHoaDonReadService service)
+    public HoaDonController(IHoaDonReadService service, IPdfExportService pdfExportService)
     {
         _service = service;
+        _pdfExportService = pdfExportService;
     }
 
-  // API read-only tối thiểu để frontend hiển thị dữ liệu thật.
-  // TODO [Nguyễn Hoài Phương]: Hoàn thiện nghiệp vụ hóa đơn / đơn online sau.
     [HttpGet]
     public async Task<ActionResult<List<HoaDonListDto>>> GetAll(
         [FromQuery] string? trangThai,
@@ -33,5 +33,14 @@ public class HoaDonController : ControllerBase
     public async Task<ActionResult<HoaDonDetailDto>> GetById(int id)
     {
         return Ok(await _service.GetByIdAsync(id));
+    }
+
+    [HttpGet("{id:int}/pdf")]
+    public async Task<IActionResult> ExportPdf(int id)
+    {
+        var detail = await _service.GetByIdAsync(id);
+        var bytes = _pdfExportService.ExportHoaDon(detail);
+        var fileName = $"HoaDon_GongDek_{id}_{DateTime.Now:yyyyMMdd}.pdf";
+        return File(bytes, "application/pdf", fileName);
     }
 }

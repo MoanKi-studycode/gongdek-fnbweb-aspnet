@@ -63,7 +63,9 @@ GongDek_Nhom20/
 
 1. Mở **SQL Server Management Studio** (hoặc `sqlcmd`).
 2. Chạy `database/schema.sql` — tạo bảng, ràng buộc, view, function, stored procedure.
-3. Chạy `database/seed.sql` — dữ liệu mẫu (tài khoản, danh mục, sản phẩm, hóa đơn demo).
+3. Chạy `database/seed.sql` — dữ liệu nền (tài khoản, size, topping, ca mẫu).
+4. Chạy `powershell -File scripts/sync-product-images.ps1` — copy ảnh sản phẩm vào `public/images/products`.
+5. Chạy `database/seed_catalog_demo.sql` — 31 món, voucher, khách hàng, đơn POS/online mẫu (01/2026–nay).
 
 > **Lưu ý:** File SQL phải lưu **UTF-8** (không BOM) để tiếng Việt hiển thị đúng. Không seed bằng C#.
 
@@ -140,11 +142,13 @@ Nhân viên **không** tách role ThuNgan/Barista — một tài khoản `NhanVi
 - Frontend admin: Products, Categories, Inventory, StockIn, Size/Topping
 - Seed mẫu kho trong `database/seed.sql`
 
-### Nguyễn Hoài Phương (sẽ cập nhật sau)
+### Nguyễn Hoài Phương (đã hoàn thành)
 
-- POS tại quầy: tạo hóa đơn, thanh toán
-- Workflow đơn online: xác nhận, cập nhật trạng thái, pha chế, giao hàng
-- Voucher, khách hàng CRUD, đánh giá sản phẩm, hoàn/hủy đơn
+- POS tại quầy: `POST /api/don-hang-online/pos-checkout` (yêu cầu mở ca)
+- Workflow đơn online: cập nhật trạng thái, hủy đơn + phiếu hoàn
+- Voucher CRUD, khách hàng CRUD, đánh giá sản phẩm
+- Xuất PDF hóa đơn: `GET /api/hoa-don/{id}/pdf`
+- Seed mẫu: `database/seed_catalog_demo.sql` (31 món, khách hàng, đơn 01–05/2026)
 
 ## 11. API chính
 
@@ -188,9 +192,18 @@ Nhân viên **không** tách role ThuNgan/Barista — một tài khoản `NhanVi
 |--------|----------|-------|--------|
 | GET | `/api/hoa-don` | NoiBo | Danh sách hóa đơn |
 | GET | `/api/hoa-don/{id}` | NoiBo | Chi tiết |
+| GET | `/api/hoa-don/{id}/pdf` | NoiBo | Xuất PDF hóa đơn |
 | GET | `/api/don-hang-online` | NoiBo | Danh sách đơn online |
 | GET | `/api/don-hang-online/{id}` | NoiBo | Chi tiết |
 | POST | `/api/don-hang-online` | KhachHang | Khách đặt hàng online |
+| POST | `/api/don-hang-online/pos-checkout` | NoiBo | POS thanh toán tại quầy |
+| PUT | `/api/don-hang-online/{id}/update-status` | NoiBo | Cập nhật trạng thái đơn |
+| POST | `/api/don-hang-online/{id}/cancel` | NoiBo | Hủy đơn + phiếu hoàn |
+| GET/POST/PUT/DELETE | `/api/khach-hang` | NoiBo | Khách hàng CRUD |
+| GET | `/api/khach-hang/phone/{phone}` | NoiBo | Tra cứu SĐT (POS) |
+| GET/POST/PUT/DELETE | `/api/voucher` | NoiBo/QuanLy | Voucher |
+| GET | `/api/voucher/code/{code}` | NoiBo | Tra mã voucher |
+| GET/POST | `/api/danh-gia` | Anon/KhachHang | Đánh giá sản phẩm |
 
 ## 12. GitLab workflow
 

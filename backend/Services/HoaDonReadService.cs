@@ -15,8 +15,6 @@ public class HoaDonReadService : IHoaDonReadService
         _context = context;
     }
 
-  // API read-only tối thiểu để frontend hiển thị dữ liệu thật.
-  // TODO [Nguyễn Hoài Phương]: Hoàn thiện nghiệp vụ hóa đơn / đơn online sau.
     public async Task<List<HoaDonListDto>> GetAllAsync(string? trangThai, DateOnly? tuNgay, DateOnly? denNgay)
     {
         var query = _context.HoaDons

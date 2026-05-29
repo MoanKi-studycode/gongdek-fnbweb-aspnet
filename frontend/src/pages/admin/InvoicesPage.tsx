@@ -21,7 +21,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Search, Eye, Receipt, DollarSign } from 'lucide-react';
 import { toast } from 'sonner';
-import { getInvoices, getInvoiceById } from '@/services/invoiceService';
+import { getInvoices, getInvoiceById, exportInvoicePdf } from '@/services/invoiceService';
 import type { Invoice } from '@/types';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 
@@ -320,7 +320,19 @@ export function InvoicesPage() {
                   <Button variant="outline" onClick={() => setIsDetailOpen(false)}>
                     Đóng
                   </Button>
-                  <Button className="bg-[#8B7355] hover:bg-[#6F5B44]">In hóa đơn</Button>
+                  <Button
+                    className="bg-[#8B7355] hover:bg-[#6F5B44]"
+                    onClick={async () => {
+                      try {
+                        await exportInvoicePdf(selectedInvoice.id);
+                        toast.success('Đã tải file PDF hóa đơn');
+                      } catch (err) {
+                        toast.error(err instanceof Error ? err.message : 'Xuất PDF thất bại');
+                      }
+                    }}
+                  >
+                    Xuất PDF
+                  </Button>
                 </div>
               </div>
             )}

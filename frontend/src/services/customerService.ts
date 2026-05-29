@@ -3,22 +3,69 @@ import type { Customer } from '@/types';
 
 export type { Customer };
 
-// TODO [Nguyễn Hoài Phương]: Hoàn thiện API /api/khach-hang
+export interface KhachHangApi {
+  maKH: number;
+  hoTen: string;
+  soDienThoai: string;
+  email: string;
+  hangThanhVien: string;
+  diemTichLuy: number;
+  trangThai: string;
+  tongChiTieu: number;
+}
 
-/** Gọi API danh sách khách hàng */
-export async function getCustomers(): Promise<Customer[]> {
-  try {
-    return await apiClient.get<Customer[]>('/khach-hang');
-  } catch {
-    return [];
+function mapMemberLevel(hang: string): Customer['memberLevel'] {
+  switch (hang) {
+    case 'KimCuong':
+      return 'Kim cương';
+    case 'Vang':
+      return 'Vàng';
+    case 'Bac':
+      return 'Bạc';
+    default:
+      return 'Bạc';
   }
 }
 
-/** Tìm khách hàng theo SĐT — dùng cho POS */
+export function mapKhachHangToCustomer(dto: KhachHangApi): Customer {
+  return {
+    id: String(dto.maKH),
+    name: dto.hoTen,
+    phone: dto.soDienThoai,
+    points: dto.diemTichLuy,
+    totalSpent: dto.tongChiTieu,
+    memberLevel: mapMemberLevel(dto.hangThanhVien),
+  };
+}
+
+export async function getCustomers(search?: string): Promise<Customer[]> {
+  const query = search ? `?search=${encodeURIComponent(search)}` : '';
+  const data = await apiClient.get<KhachHangApi[]>(`/khach-hang${query}`);
+  return data.map(mapKhachHangToCustomer);
+}
+
 export async function findCustomerByPhone(phone: string): Promise<Customer | null> {
   try {
-    return await apiClient.get<Customer>(`/khach-hang/phone/${encodeURIComponent(phone)}`);
+    const data = await apiClient.get<KhachHangApi>(`/khach-hang/phone/${encodeURIComponent(phone)}`);
+    return mapKhachHangToCustomer(data);
   } catch {
     return null;
   }
+}
+
+export async function createCustomer(payload: {
+  hoTen: string;
+  soDienThoai: string;
+  email?: string;
+}): Promise<Customer> {
+  const data = await apiClient.post<KhachHangApi>('/khach-hang', payload);
+  return mapKhachHangToCustomer(data);
+}
+
+export async function updateCustomer(
+  id: number | string,
+  payload: Partial<{ hoTen: string; soDienThoai: string; email: string; diemTichLuy: number }>,
+): Promise<Customer> {
+  const data = await apiClient.put<KhachHangApi>(`/khach-hang/${id}`, payload);
+  return mapKhachHangToCustomer(data);
 }

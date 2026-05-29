@@ -1,4 +1,4 @@
-import { apiClient } from './apiClient';
+import { apiClient, downloadFile } from './apiClient';
 import {
   mapHoaDonDetailToInvoice,
   mapHoaDonListToInvoice,
@@ -32,4 +32,8 @@ export async function getInvoices(params?: InvoiceQuery): Promise<Invoice[]> {
 export async function getInvoiceById(id: number | string): Promise<Invoice> {
   const data = await apiClient.get<HoaDonDetailApi>(`/hoa-don/${id}`);
   return mapHoaDonDetailToInvoice(data);
+}
+
+export async function exportInvoicePdf(id: number | string): Promise<void> {
+  await downloadFile(`/hoa-don/${id}/pdf`, `HoaDon_${id}.pdf`);
 }

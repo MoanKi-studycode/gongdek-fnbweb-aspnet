@@ -128,6 +128,17 @@ export function mapOnlineStatus(status: string): OrderStatus {
   return map[status] ?? 'CHO_XAC_NHAN';
 }
 
+export function mapOnlineStatusToApi(status: OrderStatus): string {
+  const map: Record<OrderStatus, string> = {
+    CHO_XAC_NHAN: 'ChoXacNhan',
+    DANG_XU_LY: 'DangXuLy',
+    DANG_GIAO: 'DangGiao',
+    HOAN_THANH: 'HoanThanh',
+    DA_HUY: 'DaHuy',
+  };
+  return map[status];
+}
+
 export function mapHoaDonDetailToInvoice(dto: HoaDonDetailApi): Invoice {
   return {
     id: String(dto.maHoaDon),

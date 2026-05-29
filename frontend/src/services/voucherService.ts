@@ -3,33 +3,78 @@ import type { Voucher } from '@/types';
 
 export type { Voucher };
 
-// TODO [Nguyễn Hoài Phương]: Hoàn thiện API /api/voucher
-
-/** Gọi API danh sách voucher */
-export async function getVouchers(): Promise<Voucher[]> {
-  try {
-    return await apiClient.get<Voucher[]>('/voucher');
-  } catch {
-    return [];
-  }
+export interface VoucherApi {
+  maVoucher: number;
+  maCode: string;
+  moTa?: string | null;
+  loaiGiam: 'PHAN_TRAM' | 'SO_TIEN';
+  giaTriGiam: number;
+  donHangToiThieu?: number | null;
+  giamToiDa?: number | null;
+  ngayBatDau: string;
+  ngayKetThuc: string;
+  trangThai: string;
 }
 
-/** Kiểm tra voucher hết hạn */
+export function mapVoucherApi(dto: VoucherApi): Voucher {
+  return {
+    id: String(dto.maVoucher),
+    code: dto.maCode,
+    name: dto.moTa?.split('|')[1]?.trim() || dto.maCode,
+    type: dto.loaiGiam,
+    value: dto.giaTriGiam,
+    minOrder: dto.donHangToiThieu ?? 0,
+    maxDiscount: dto.giamToiDa ?? undefined,
+    expiryDate: dto.ngayKetThuc,
+  };
+}
+
+export async function getVouchers(): Promise<Voucher[]> {
+  const data = await apiClient.get<VoucherApi[]>('/voucher');
+  return data.map(mapVoucherApi);
+}
+
 export function isVoucherExpired(voucher: Voucher): boolean {
   return new Date(voucher.expiryDate) < new Date();
 }
 
-/** Tìm voucher theo mã — dùng cho POS */
 export async function findVoucherByCode(code: string): Promise<Voucher | null> {
   try {
-    return await apiClient.get<Voucher>(`/voucher/code/${encodeURIComponent(code)}`);
+    const data = await apiClient.get<VoucherApi>(`/voucher/code/${encodeURIComponent(code)}`);
+    if (data.trangThai !== 'ConHieuLuc') return null;
+    return mapVoucherApi(data);
   } catch {
     return null;
   }
 }
 
-/** Kiểm tra voucher có hợp lệ cho đơn hàng */
 export function isVoucherValid(voucher: Voucher, orderTotal: number): boolean {
   if (isVoucherExpired(voucher)) return false;
   return orderTotal >= voucher.minOrder;
+}
+
+export async function createVoucher(payload: {
+  maCode: string;
+  moTa?: string;
+  loaiGiam: 'PHAN_TRAM' | 'SO_TIEN';
+  giaTriGiam: number;
+  donHangToiThieu?: number;
+  giamToiDa?: number;
+  ngayBatDau: string;
+  ngayKetThuc: string;
+}): Promise<Voucher> {
+  const data = await apiClient.post<VoucherApi>('/voucher', payload);
+  return mapVoucherApi(data);
+}
+
+export async function updateVoucher(
+  id: number | string,
+  payload: Parameters<typeof createVoucher>[0] & { trangThai?: string },
+): Promise<Voucher> {
+  const data = await apiClient.put<VoucherApi>(`/voucher/${id}`, payload);
+  return mapVoucherApi(data);
+}
+
+export async function deleteVoucher(id: number | string): Promise<void> {
+  await apiClient.delete(`/voucher/${id}`);
 }
