@@ -20,6 +20,7 @@ import { VouchersPage } from '@/pages/admin/VouchersPage';
 import { InvoicesPage } from '@/pages/admin/InvoicesPage';
 import { OrdersOnlinePage } from '@/pages/admin/OrdersOnlinePage';
 import { ReportsPage } from '@/pages/admin/ReportsPage';
+import { ReviewsPage } from '@/pages/admin/ReviewsPage';
 
 import { POSPage } from '@/pages/cashier/POSPage';
 import { POSOrdersOnlinePage } from '@/pages/cashier/POSOrdersOnlinePage';
@@ -135,5 +136,6 @@ export const router = createBrowserRouter([
   { path: '/admin/vouchers', element: <AdminRoute><VouchersPage /></AdminRoute> },
   { path: '/admin/invoices', element: <AdminRoute><InvoicesPage /></AdminRoute> },
   { path: '/admin/orders-online', element: <AdminRoute><OrdersOnlinePage /></AdminRoute> },
+  { path: '/admin/reviews', element: <AdminRoute><ReviewsPage /></AdminRoute> },
   { path: '/admin/reports', element: <AdminRoute><ReportsPage /></AdminRoute> },
 ]);

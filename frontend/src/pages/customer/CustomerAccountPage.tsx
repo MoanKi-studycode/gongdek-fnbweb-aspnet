@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { LogOut, ShoppingBag, User, Award } from 'lucide-react';
+import { LogOut, ShoppingBag, User, Award, Star } from 'lucide-react';
 import { BrandLogo } from '@/components/common/BrandLogo';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { logoutConfirmOptions, useConfirm } from '@/components/common/ConfirmDialog';
@@ -18,6 +18,7 @@ import {
 } from '@/services/orderStatus';
 import type { Customer } from '@/types';
 import type { Invoice } from '@/types/modules';
+import { OrderReviewDialog } from '@/components/reviews/OrderReviewDialog';
 
 type OrderFilter = 'ALL' | 'IN_PROGRESS' | 'COMPLETED';
 
@@ -28,6 +29,7 @@ export function CustomerAccountPage() {
   const [profile, setProfile] = useState<Customer | null>(null);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [orderFilter, setOrderFilter] = useState<OrderFilter>('ALL');
+  const [reviewInvoiceId, setReviewInvoiceId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -216,6 +218,19 @@ export function CustomerAccountPage() {
                       </div>
                       <p className="font-bold text-gray-900 shrink-0">{formatPrice(invoice.total)}</p>
                     </div>
+                    {isOrderCompleted(invoice) && (
+                      <div className="mt-3">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="border-amber-300 text-amber-800 hover:bg-amber-50"
+                          onClick={() => setReviewInvoiceId(invoice.id)}
+                        >
+                          <Star className="w-4 h-4 mr-2" />
+                          Đánh giá sản phẩm
+                        </Button>
+                      </div>
+                    )}
                     {invoice.items.length > 0 && (
                       <>
                         <Separator className="my-2" />
@@ -234,6 +249,14 @@ export function CustomerAccountPage() {
           </CardContent>
         </Card>
       </div>
+
+      {reviewInvoiceId && (
+        <OrderReviewDialog
+          open={!!reviewInvoiceId}
+          onOpenChange={(open) => !open && setReviewInvoiceId(null)}
+          invoiceId={reviewInvoiceId}
+        />
+      )}
     </div>
   );
 }

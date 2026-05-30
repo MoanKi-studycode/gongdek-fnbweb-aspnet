@@ -16,6 +16,7 @@ import {
   ShoppingCart,
   BarChart3,
   Clock,
+  Star,
   LogOut,
 } from 'lucide-react';
 import { logoutConfirmOptions, useConfirm } from '@/components/common/ConfirmDialog';
@@ -39,6 +40,7 @@ const menuItems = [
   { path: '/admin/vouchers', icon: Ticket, label: 'Quản lý voucher' },
   { path: '/admin/invoices', icon: Receipt, label: 'Quản lý hóa đơn' },
   { path: '/admin/orders-online', icon: ShoppingCart, label: 'Quản lý đơn online' },
+  { path: '/admin/reviews', icon: Star, label: 'Đánh giá sản phẩm' },
   { path: '/admin/reports', icon: BarChart3, label: 'Báo cáo doanh thu' },
 ];
 

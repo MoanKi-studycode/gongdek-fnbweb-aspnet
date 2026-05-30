@@ -17,11 +17,44 @@ public class DanhGiaController : ControllerBase
         _service = service;
     }
 
+    [HttpGet]
+    [Authorize(Policy = "QuanLy")]
+    public async Task<ActionResult<List<DanhGiaDto>>> GetAll()
+    {
+        return Ok(await _service.GetAllAsync());
+    }
+
+    [HttpGet("tom-tat")]
+    [AllowAnonymous]
+    public async Task<ActionResult<List<DanhGiaTomTatDto>>> GetAllSummaries()
+    {
+        return Ok(await _service.GetAllSummariesAsync());
+    }
+
     [HttpGet("san-pham/{maSanPham:int}")]
     [AllowAnonymous]
     public async Task<ActionResult<List<DanhGiaDto>>> GetBySanPham(int maSanPham)
     {
         return Ok(await _service.GetBySanPhamAsync(maSanPham));
+    }
+
+    [HttpGet("san-pham/{maSanPham:int}/tom-tat")]
+    [AllowAnonymous]
+    public async Task<ActionResult<DanhGiaTomTatDto>> GetSummaryBySanPham(int maSanPham)
+    {
+        var summary = await _service.GetSummaryBySanPhamAsync(maSanPham);
+        return summary == null ? NotFound(new { message = "Chưa có đánh giá." }) : Ok(summary);
+    }
+
+    [HttpGet("hoa-don/{maHoaDon:int}")]
+    [Authorize(Policy = "KhachHang")]
+    public async Task<ActionResult<List<DanhGiaDto>>> GetByHoaDon(int maHoaDon)
+    {
+        var user = JwtHelper.GetUserFromClaims(User);
+        if (user == null)
+            return Unauthorized();
+
+        return Ok(await _service.GetByHoaDonForCustomerAsync(user.Id, maHoaDon));
     }
 
     [HttpPost]

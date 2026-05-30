@@ -34,6 +34,7 @@ export interface Invoice {
   customerPhone: string;
   employeeName: string;
   items: {
+    productId: string;
     productName: string;
     size: string;
     toppings: string[];
@@ -70,6 +71,23 @@ export interface Voucher {
   maxDiscount?: number;
   expiryDate: string;
   status: 'ConHieuLuc' | 'HetHan';
+}
+
+export interface ProductReview {
+  id: string;
+  invoiceId: string;
+  productId: string;
+  productName: string;
+  userName: string;
+  stars: number;
+  comment?: string;
+  createdAt: string;
+}
+
+export interface ProductReviewSummary {
+  productId: string;
+  count: number;
+  averageRating: number;
 }
 
 export type InventoryUnit = 'kg' | 'lít' | 'gói' | 'hộp' | 'chai' | 'cái';

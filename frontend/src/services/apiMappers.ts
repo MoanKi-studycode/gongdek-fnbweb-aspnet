@@ -149,6 +149,7 @@ export function mapHoaDonDetailToInvoice(dto: HoaDonDetailApi): Invoice {
     customerPhone: dto.soDienThoaiKhach ?? '',
     employeeName: dto.tenNhanVienLap,
     items: dto.chiTiet.map((ct) => ({
+      productId: String(ct.maSanPham),
       productName: ct.tenSanPham,
       size: ct.tenSize,
       toppings: ct.toppings.map((t) => t.tenTopping),

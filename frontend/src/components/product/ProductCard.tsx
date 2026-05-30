@@ -3,6 +3,9 @@ import { Product, Topping } from '@/types';
 import { useCart } from '@/contexts/CartContext';
 import { Button } from '@/components/ui/button';
 import { Plus, Minus } from 'lucide-react';
+import { ProductReviewBadge } from '@/components/reviews/ProductReviewBadge';
+import { ProductReviewsDialog } from '@/components/reviews/ProductReviewsDialog';
+import type { ProductReviewSummary } from '@/types/modules';
 import {
   Dialog,
   DialogContent,
@@ -18,11 +21,12 @@ import { getToppings } from '@/services/toppingService';
 
 interface ProductCardProps {
   product: Product;
+  reviewSummary?: ProductReviewSummary | null;
 }
 
 const SIZE_SURCHARGE = 5000; // Phụ thu Size L
 
-export function ProductCard({ product }: ProductCardProps) {
+export function ProductCard({ product, reviewSummary }: ProductCardProps) {
   const { addToCart } = useCart();
   const [isOpen, setIsOpen] = useState(false);
   const [size, setSize] = useState<'M' | 'L'>('M');
@@ -30,6 +34,7 @@ export function ProductCard({ product }: ProductCardProps) {
   const [notes, setNotes] = useState('');
   const [quantity, setQuantity] = useState(1);
   const [availableToppings, setAvailableToppings] = useState<Topping[]>([]);
+  const [reviewsOpen, setReviewsOpen] = useState(false);
 
   useEffect(() => {
     getToppings().then(setAvailableToppings);
@@ -83,7 +88,13 @@ export function ProductCard({ product }: ProductCardProps) {
             <h3 className="font-semibold text-lg text-gray-900">{product.name}</h3>
             <span className="text-[#8B7355] font-semibold">{formatPrice(product.price)}</span>
           </div>
-          <p className="text-gray-600 text-sm mb-4">{product.description}</p>
+          <p className="text-gray-600 text-sm mb-2">{product.description}</p>
+          <div className="mb-4">
+            <ProductReviewBadge
+              summary={reviewSummary}
+              onClick={() => setReviewsOpen(true)}
+            />
+          </div>
           <Button
             onClick={() => setIsOpen(true)}
             className="w-full bg-[#8B7355] hover:bg-[#6F5B44]"
@@ -93,6 +104,14 @@ export function ProductCard({ product }: ProductCardProps) {
           </Button>
         </div>
       </div>
+
+      <ProductReviewsDialog
+        open={reviewsOpen}
+        onOpenChange={setReviewsOpen}
+        productId={product.id}
+        productName={product.name}
+        initialSummary={reviewSummary}
+      />
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">

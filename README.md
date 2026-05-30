@@ -21,13 +21,13 @@ docs/        Báo cáo audit/cleanup (SecurityAuditReport, FinalCleanupReport)
 
 | Vai trò | Đường dẫn | Chức năng |
 |---------|-----------|-----------|
-| **Quản lý** | `/admin/*` | Dashboard, sản phẩm, kho, nhà cung cấp, nhân viên, ca làm, hóa đơn, đơn online, báo cáo |
+| **Quản lý** | `/admin/*` | Dashboard, sản phẩm, kho, nhà cung cấp, nhân viên, ca làm, hóa đơn, đơn online, **đánh giá sản phẩm** (`/admin/reviews`), báo cáo |
 | **Nhân viên** | `/employee/pos` | POS — bán tại quầy, thanh toán, tạo hóa đơn |
 | | `/employee/orders-online` | Xử lý đơn đặt online (xác nhận, pha chế, giao hàng) |
 | | `/employee/invoices` | Quản lý hóa đơn — tra cứu POS/online, chi tiết, xuất PDF |
 | | `/employee/shifts` | Ca làm việc (chấm công) |
-| **Khách hàng** | `/` | Menu, giỏ hàng, đặt online |
-| | `/customer/home` | Tài khoản, lịch sử đơn, trạng thái đơn hàng |
+| **Khách hàng** | `/` | Menu, giỏ hàng, đặt online, xem đánh giá sản phẩm |
+| | `/customer/home` | Tài khoản, lịch sử đơn, **đánh giá sau khi hoàn thành** |
 
 ## Tạo database
 

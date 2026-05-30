@@ -2,6 +2,8 @@ import { Button } from '@/components/ui/button';
 import { Sparkles, Heart, Camera, MapPin, Clock, Instagram } from 'lucide-react';
 import { ProductCard } from '@/components/product/ProductCard';
 import { getProducts } from '@/services/productService';
+import { buildReviewSummaryMap, getReviewSummaries } from '@/services/reviewService';
+import type { ProductReviewSummary } from '@/types/modules';
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router';
 import { useCart } from '@/contexts/CartContext';
@@ -13,6 +15,7 @@ export function HomePage() {
   const { openCart } = useCart();
   const [selectedCategory, setSelectedCategory] = useState('Tất cả');
   const [products, setProducts] = useState<Product[]>([]);
+  const [reviewMap, setReviewMap] = useState<Record<string, ProductReviewSummary>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -29,8 +32,11 @@ export function HomePage() {
   useEffect(() => {
     setLoading(true);
     setError('');
-    getProducts()
-      .then(setProducts)
+    Promise.all([getProducts(), getReviewSummaries()])
+      .then(([productList, summaries]) => {
+        setProducts(productList);
+        setReviewMap(buildReviewSummaryMap(summaries));
+      })
       .catch((err) => setError(err instanceof Error ? err.message : 'Không thể tải dữ liệu. Vui lòng kiểm tra API.'))
       .finally(() => setLoading(false));
   }, []);
@@ -147,7 +153,11 @@ export function HomePage() {
               <div className="col-span-full text-center py-16 text-gray-400">Chưa có dữ liệu.</div>
             ) : (
               filteredProducts.map((product) => (
-                <ProductCard key={product.id} product={product} />
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  reviewSummary={reviewMap[product.id] ?? null}
+                />
               ))
             )}
           </div>

@@ -43,6 +43,9 @@ import { toast } from 'sonner';
 import { deleteConfirmOptions, useConfirm } from '@/components/common/ConfirmDialog';
 import { notifyError, notifySuccess, toastMessages } from '@/components/common/ToastMessage';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
+import { ProductReviewBadge } from '@/components/reviews/ProductReviewBadge';
+import { buildReviewSummaryMap, getReviewSummaries } from '@/services/reviewService';
+import type { ProductReviewSummary } from '@/types/modules';
 
 const STATUS_LABEL: Record<ProductStatus, string> = {
   DangBan: 'Đang bán',
@@ -79,6 +82,7 @@ export function ProductsPage() {
   const [editingProduct, setEditingProduct] = useState<AdminProduct | null>(null);
   const [formData, setFormData] = useState({ ...EMPTY_FORM });
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [reviewMap, setReviewMap] = useState<Record<string, ProductReviewSummary>>({});
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('vi-VN', {
@@ -108,6 +112,12 @@ export function ProductsPage() {
       setLoading(false);
     }
   }, [categoryFilter, searchQuery]);
+
+  useEffect(() => {
+    getReviewSummaries()
+      .then((summaries) => setReviewMap(buildReviewSummaryMap(summaries)))
+      .catch(() => setReviewMap({}));
+  }, []);
 
   useEffect(() => {
     loadCategories().catch((err) => {
@@ -287,6 +297,7 @@ export function ProductsPage() {
                     <TableHead>Tên sản phẩm</TableHead>
                     <TableHead>Danh mục</TableHead>
                     <TableHead>Giá bán</TableHead>
+                    <TableHead>Đánh giá</TableHead>
                     <TableHead>Trạng thái</TableHead>
                     <TableHead className="text-right">Thao tác</TableHead>
                   </TableRow>
@@ -317,6 +328,9 @@ export function ProductsPage() {
                         </span>
                       </TableCell>
                       <TableCell className="font-semibold text-[#8B7355]">{formatPrice(product.price)}</TableCell>
+                      <TableCell>
+                        <ProductReviewBadge summary={reviewMap[String(product.maSanPham)] ?? null} />
+                      </TableCell>
                       <TableCell>
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${STATUS_CLASS[product.trangThai]}`}>
                           {STATUS_LABEL[product.trangThai]}
