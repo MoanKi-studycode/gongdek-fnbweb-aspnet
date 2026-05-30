@@ -25,6 +25,7 @@ docs/        Báo cáo audit/cleanup (SecurityAuditReport, FinalCleanupReport)
 | **Nhân viên** | `/employee/pos` | POS — bán tại quầy, thanh toán, tạo hóa đơn |
 | | `/employee/orders-online` | Xử lý đơn đặt online (xác nhận, pha chế, giao hàng) |
 | | `/employee/invoices` | Quản lý hóa đơn — tra cứu POS/online, chi tiết, xuất PDF |
+| | `/employee/customers` | Tra cứu khách hàng — xem thông tin, điểm tích lũy (chỉ đọc) |
 | | `/employee/shifts` | Ca làm việc (chấm công) |
 | **Khách hàng** | `/` | Menu, giỏ hàng, đặt online, xem đánh giá sản phẩm |
 | | `/customer/home` | Tài khoản, lịch sử đơn, **đánh giá sau khi hoàn thành** |

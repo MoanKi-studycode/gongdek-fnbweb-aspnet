@@ -34,9 +34,11 @@ export function mapKhachHangToCustomer(dto: KhachHangApi): Customer {
     id: String(dto.maKH),
     name: dto.hoTen,
     phone: dto.soDienThoai,
+    email: dto.email || undefined,
     points: dto.diemTichLuy,
     totalSpent: dto.tongChiTieu,
     memberLevel: mapMemberLevel(dto.hangThanhVien),
+    status: dto.trangThai,
   };
 }
 

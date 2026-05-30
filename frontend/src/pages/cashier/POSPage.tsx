@@ -248,6 +248,11 @@ export function POSPage() {
                 Hóa đơn
               </Button>
             </Link>
+            <Link to="/employee/customers">
+              <Button variant="outline" size="sm">
+                Khách hàng
+              </Button>
+            </Link>
             <Link to="/employee/orders-online">
               <Button variant="outline" className="border-[#8B7355] text-[#8B7355] hover:bg-[#8B7355] hover:text-white">
                 <Package className="w-4 h-4 mr-2" />

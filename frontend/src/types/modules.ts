@@ -56,9 +56,11 @@ export interface Customer {
   id: string;
   name: string;
   phone: string;
+  email?: string;
   points: number;
   totalSpent: number;
   memberLevel: 'Bạc' | 'Vàng' | 'Kim cương';
+  status?: string;
 }
 
 export interface Voucher {

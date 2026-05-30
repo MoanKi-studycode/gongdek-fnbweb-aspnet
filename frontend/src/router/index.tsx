@@ -25,6 +25,7 @@ import { ReviewsPage } from '@/pages/admin/ReviewsPage';
 import { POSPage } from '@/pages/cashier/POSPage';
 import { POSOrdersOnlinePage } from '@/pages/cashier/POSOrdersOnlinePage';
 import { EmployeeInvoicesPage } from '@/pages/cashier/EmployeeInvoicesPage';
+import { EmployeeCustomersPage } from '@/pages/cashier/EmployeeCustomersPage';
 import { CustomerAccountPage } from '@/pages/customer/CustomerAccountPage';
 
 function AdminRoute({ children }: { children: React.ReactNode }) {
@@ -91,6 +92,14 @@ export const router = createBrowserRouter([
     element: (
       <EmployeeRoute>
         <EmployeeInvoicesPage />
+      </EmployeeRoute>
+    ),
+  },
+  {
+    path: '/employee/customers',
+    element: (
+      <EmployeeRoute>
+        <EmployeeCustomersPage />
       </EmployeeRoute>
     ),
   },

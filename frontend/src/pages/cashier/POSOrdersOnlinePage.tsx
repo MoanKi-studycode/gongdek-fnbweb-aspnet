@@ -177,6 +177,11 @@ export function POSOrdersOnlinePage() {
                 Hóa đơn
               </Button>
             </Link>
+            <Link to="/employee/customers">
+              <Button variant="outline" size="sm">
+                Khách hàng
+              </Button>
+            </Link>
             <Link to="/employee/shifts">
               <Button variant="outline" size="sm">
                 Ca làm

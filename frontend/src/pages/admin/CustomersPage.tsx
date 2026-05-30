@@ -23,6 +23,8 @@ import { toast } from 'sonner';
 import { getCustomers, createCustomer } from '@/services/customerService';
 import { Label } from '@/components/ui/label';
 import type { Customer } from '@/types';
+import { CustomerDetailDialog } from '@/components/customers/CustomerDetailDialog';
+import { formatCustomerPrice, getMemberLevelColor } from '@/components/customers/customerUi';
 
 export function CustomersPage() {
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -59,21 +61,7 @@ export function CustomersPage() {
     }
   };
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('vi-VN', {
-      style: 'currency',
-      currency: 'VND',
-    }).format(price);
-  };
-
-  const getMemberLevelColor = (level: string) => {
-    const colors: Record<string, string> = {
-      'Bạc': 'bg-gray-100 text-gray-700',
-      'Vàng': 'bg-yellow-100 text-yellow-700',
-      'Kim cương': 'bg-blue-100 text-blue-700',
-    };
-    return colors[level] || 'bg-gray-100 text-gray-700';
-  };
+  const formatPrice = formatCustomerPrice;
 
   const filteredCustomers = customers.filter(
     (c) =>
@@ -231,115 +219,11 @@ export function CustomersPage() {
           </DialogContent>
         </Dialog>
 
-        {/* Customer Detail Modal */}
-        <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>Thông tin khách hàng</DialogTitle>
-            </DialogHeader>
-
-            {selectedCustomer && (
-              <div className="space-y-6">
-                {/* Customer Info Cards */}
-                <div className="grid grid-cols-2 gap-4">
-                  <Card>
-                    <CardContent className="p-4">
-                      <p className="text-sm text-gray-600 mb-1">Họ tên</p>
-                      <p className="text-lg font-semibold">{selectedCustomer.name}</p>
-                    </CardContent>
-                  </Card>
-
-                  <Card>
-                    <CardContent className="p-4">
-                      <p className="text-sm text-gray-600 mb-1">Số điện thoại</p>
-                      <p className="text-lg font-semibold">{selectedCustomer.phone}</p>
-                    </CardContent>
-                  </Card>
-
-                  <Card>
-                    <CardContent className="p-4">
-                      <p className="text-sm text-gray-600 mb-1">Hạng thành viên</p>
-                      <Badge className={getMemberLevelColor(selectedCustomer.memberLevel)}>
-                        {selectedCustomer.memberLevel}
-                      </Badge>
-                    </CardContent>
-                  </Card>
-
-                  <Card>
-                    <CardContent className="p-4">
-                      <p className="text-sm text-gray-600 mb-1">Mã khách hàng</p>
-                      <p className="text-lg font-mono font-semibold">{selectedCustomer.id}</p>
-                    </CardContent>
-                  </Card>
-                </div>
-
-                {/* Stats */}
-                <div className="grid grid-cols-2 gap-4">
-                  <Card className="bg-[#FAF8F3]">
-                    <CardContent className="p-6">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-sm text-gray-600">Điểm tích lũy</p>
-                          <p className="text-3xl font-bold text-[#8B7355] mt-1">
-                            {selectedCustomer.points}
-                          </p>
-                        </div>
-                        <Award className="w-12 h-12 text-[#8B7355] opacity-50" />
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="bg-[#E8DCC4]">
-                    <CardContent className="p-6">
-                      <div>
-                        <p className="text-sm text-gray-600">Tổng chi tiêu</p>
-                        <p className="text-2xl font-bold text-[#8B7355] mt-1">
-                          {formatPrice(selectedCustomer.totalSpent)}
-                        </p>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-
-                {/* Member Benefits */}
-                <Card>
-                  <CardContent className="p-4">
-                    <h3 className="font-semibold mb-3">Quyền lợi thành viên</h3>
-                    <div className="space-y-2 text-sm">
-                      {selectedCustomer.memberLevel === 'Bạc' && (
-                        <>
-                          <p className="text-gray-600">• Tích điểm: 1 điểm/10.000đ</p>
-                          <p className="text-gray-600">• Sinh nhật: Voucher 20.000đ</p>
-                        </>
-                      )}
-                      {selectedCustomer.memberLevel === 'Vàng' && (
-                        <>
-                          <p className="text-gray-600">• Tích điểm: 1.5 điểm/10.000đ</p>
-                          <p className="text-gray-600">• Sinh nhật: Voucher 50.000đ</p>
-                          <p className="text-gray-600">• Ưu tiên đặt hàng trước</p>
-                        </>
-                      )}
-                      {selectedCustomer.memberLevel === 'Kim cương' && (
-                        <>
-                          <p className="text-gray-600">• Tích điểm: 2 điểm/10.000đ</p>
-                          <p className="text-gray-600">• Sinh nhật: Voucher 100.000đ</p>
-                          <p className="text-gray-600">• Ưu tiên đặt hàng VIP</p>
-                          <p className="text-gray-600">• Miễn phí ship toàn bộ đơn</p>
-                        </>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <div className="flex justify-end">
-                  <Button variant="outline" onClick={() => setIsDetailOpen(false)}>
-                    Đóng
-                  </Button>
-                </div>
-              </div>
-            )}
-          </DialogContent>
-        </Dialog>
+        <CustomerDetailDialog
+          customer={selectedCustomer}
+          open={isDetailOpen}
+          onOpenChange={setIsDetailOpen}
+        />
       </div>
     </AdminLayout>
   );
