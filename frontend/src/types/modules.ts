@@ -69,6 +69,7 @@ export interface Voucher {
   minOrder: number;
   maxDiscount?: number;
   expiryDate: string;
+  status: 'ConHieuLuc' | 'HetHan';
 }
 
 export type InventoryUnit = 'kg' | 'lít' | 'gói' | 'hộp' | 'chai' | 'cái';
@@ -85,7 +86,7 @@ export interface InventoryItem {
   lastUpdated: string;
 }
 
-export type StockInStatus = 'CHO_DUYET' | 'DA_DUYET' | 'HOAN_THANH' | 'HUY';
+export type StockInStatus = 'CHO_DUYET' | 'DA_DUYET' | 'HUY';
 
 export interface StockInItem {
   inventoryId: string;

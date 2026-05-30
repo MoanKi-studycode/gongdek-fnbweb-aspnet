@@ -28,7 +28,7 @@ import {
 } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
 import { Plus, Edit, Trash2, Ticket } from 'lucide-react';
-import { getVouchers, createVoucher, updateVoucher, deleteVoucher } from '@/services/voucherService';
+import { getVouchers, createVoucher, updateVoucher, deleteVoucher, getVoucherStatusBadge } from '@/services/voucherService';
 import type { Voucher } from '@/types';
 import { deleteConfirmOptions, useConfirm } from '@/components/common/ConfirmDialog';
 import { notifyError, notifySuccess, toastMessages } from '@/components/common/ToastMessage';
@@ -64,9 +64,7 @@ export function VouchersPage() {
     return new Date(dateStr).toLocaleDateString('vi-VN');
   };
 
-  const isExpired = (dateStr: string) => {
-    return new Date(dateStr) < new Date();
-  };
+  const isExpired = (dateStr: string) => new Date(dateStr) < new Date();
 
   const handleOpenDialog = (voucher?: Voucher) => {
     if (voucher) {
@@ -166,7 +164,7 @@ export function VouchersPage() {
               </TableHeader>
               <TableBody>
                 {vouchers.map((voucher) => {
-                  const expired = isExpired(voucher.expiryDate);
+                  const statusBadge = getVoucherStatusBadge(voucher);
 
                   return (
                     <TableRow key={voucher.id}>
@@ -195,10 +193,9 @@ export function VouchersPage() {
                       <TableCell>{formatPrice(voucher.minOrder)}</TableCell>
                       <TableCell>{formatDate(voucher.expiryDate)}</TableCell>
                       <TableCell>
-                        {expired ? (
-                          <Badge className="bg-red-100 text-red-700">Hết hạn</Badge>
-                        ) : (
-                          <Badge className="bg-green-100 text-green-700">Còn hạn</Badge>
+                        <Badge className={statusBadge.className}>{statusBadge.label}</Badge>
+                        {voucher.status === 'ConHieuLuc' && isExpired(voucher.expiryDate) && (
+                          <p className="text-xs text-gray-500 mt-1">Quá ngày kết thúc</p>
                         )}
                       </TableCell>
                       <TableCell className="text-right">

@@ -200,6 +200,7 @@ public class DonHangOnlineWriteService : IDonHangOnlineWriteService
         {
             don.LyDoHuy = lyDoHuy?.Trim() ?? "Không có lý do";
             don.HoaDon.TrangThaiHoaDon = TrangThaiHoaDon.DaHuy;
+            await AddRefundSlipIfNeededAsync(don, staff.Id, don.LyDoHuy, null, null);
         }
 
         await _context.SaveChangesAsync();
@@ -224,24 +225,41 @@ public class DonHangOnlineWriteService : IDonHangOnlineWriteService
         don.TrangThaiOnline = TrangThaiDonHangOnline.DaHuy;
         don.LyDoHuy = dto.LyDoHuy.Trim();
         don.HoaDon.TrangThaiHoaDon = TrangThaiHoaDon.DaHuy;
-
-        if (don.HoaDon.TongThanhToan > 0)
-        {
-            _context.PhieuHoanHuys.Add(new PhieuHoanHuy
-            {
-                MaHoaDon = maHoaDon,
-                MaNVXuLy = staff.Id,
-                HinhThucXuLy = "HuyDon",
-                LyDo = dto.LyDoHuy.Trim(),
-                SoTienHoan = dto.SoTienHoan ?? don.HoaDon.TongThanhToan,
-                HinhThucHoan = dto.HinhThucHoan ?? don.HoaDon.PhuongThucThanhToan,
-                TrangThaiXuLy = "DaGhiNhan",
-                ThoiGianLap = DateTime.UtcNow,
-            });
-        }
+        await AddRefundSlipIfNeededAsync(don, staff.Id, dto.LyDoHuy.Trim(), dto.SoTienHoan, dto.HinhThucHoan);
 
         await _context.SaveChangesAsync();
         return true;
+    }
+
+    private async Task AddRefundSlipIfNeededAsync(
+        DonHangOnline don,
+        int maNvXuLy,
+        string lyDo,
+        decimal? soTienHoan,
+        string? hinhThucHoan)
+    {
+        if (don.HoaDon.TongThanhToan <= 0)
+            return;
+
+        var alreadyRefunded = _context.PhieuHoanHuys.Local.Any(p =>
+                p.MaHoaDon == don.MaHoaDon && p.HinhThucXuLy == "HuyDon")
+            || await _context.PhieuHoanHuys.AnyAsync(p =>
+                p.MaHoaDon == don.MaHoaDon && p.HinhThucXuLy == "HuyDon");
+
+        if (alreadyRefunded)
+            return;
+
+        _context.PhieuHoanHuys.Add(new PhieuHoanHuy
+        {
+            MaHoaDon = don.MaHoaDon,
+            MaNVXuLy = maNvXuLy,
+            HinhThucXuLy = "HuyDon",
+            LyDo = lyDo,
+            SoTienHoan = soTienHoan ?? don.HoaDon.TongThanhToan,
+            HinhThucHoan = hinhThucHoan ?? don.HoaDon.PhuongThucThanhToan,
+            TrangThaiXuLy = "DaGhiNhan",
+            ThoiGianLap = DateTime.UtcNow,
+        });
     }
 
     private async Task<(decimal TongTienMon, List<(ChiTietHoaDon Line, List<ChiTietHoaDonTopping> Toppings)> Lines)> BuildChiTietAsync(

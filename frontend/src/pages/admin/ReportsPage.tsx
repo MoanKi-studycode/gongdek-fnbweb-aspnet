@@ -150,7 +150,9 @@ export function ReportsPage() {
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Báo cáo doanh thu</h1>
-            <p className="text-gray-600 mt-1">Thống kê và phân tích kinh doanh từ hệ thống</p>
+            <p className="text-gray-600 mt-1">
+              Thống kê hóa đơn đã thanh toán (POS hoàn thành, online đã thu tiền/đang xử lý)
+            </p>
           </div>
           <div className="flex items-center gap-3">
             <Select value={period} onValueChange={(v) => setPeriod(v as ReportPeriod)}>

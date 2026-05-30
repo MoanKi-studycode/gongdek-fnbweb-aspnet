@@ -157,7 +157,6 @@ export function getStockInStatusLabel(status: StockInStatus): string {
   const labels: Record<StockInStatus, string> = {
     CHO_DUYET: 'Chờ duyệt',
     DA_DUYET: 'Đã duyệt',
-    HOAN_THANH: 'Hoàn thành',
     HUY: 'Đã hủy',
   };
   return labels[status];
@@ -167,8 +166,7 @@ export function getStockInStatusLabel(status: StockInStatus): string {
 export function getStockInStatusColor(status: StockInStatus): string {
   const colors: Record<StockInStatus, string> = {
     CHO_DUYET: 'bg-orange-100 text-orange-700',
-    DA_DUYET: 'bg-blue-100 text-blue-700',
-    HOAN_THANH: 'bg-green-100 text-green-700',
+    DA_DUYET: 'bg-green-100 text-green-700',
     HUY: 'bg-gray-100 text-gray-700',
   };
   return colors[status];
@@ -186,7 +184,7 @@ export function getLowStockItems(items: InventoryItem[]): InventoryItem[] {
   return items.filter((item) => item.currentStock <= item.minStock);
 }
 
-export type PhieuNhapTrangThai = 'ChoDuyet' | 'DaDuyet' | 'HoanThanh' | 'Huy';
+export type PhieuNhapTrangThai = 'ChoDuyet' | 'DaDuyet' | 'Huy';
 
 export interface ChiTietPhieuNhapApi {
   maChiTietNhap: number;
@@ -273,7 +271,6 @@ function mapPhieuTrangThaiToStockIn(status: PhieuNhapTrangThai): StockInStatus {
   const map: Record<PhieuNhapTrangThai, StockInStatus> = {
     ChoDuyet: 'CHO_DUYET',
     DaDuyet: 'DA_DUYET',
-    HoanThanh: 'HOAN_THANH',
     Huy: 'HUY',
   };
   return map[status] ?? 'CHO_DUYET';

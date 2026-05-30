@@ -32,13 +32,18 @@ import { Separator } from '@/components/ui/separator';
 import { Eye, Clock, MapPin, Phone, User } from 'lucide-react';
 import {
   getOnlineOrders,
-  getOrderStatusLabel,
-  getOrderStatusColor,
   updateOnlineOrderStatus,
   cancelOnlineOrder,
   type OnlineOrder,
   type OrderStatus,
 } from '@/services/onlineOrderService';
+import {
+  getOrderStatusLabel,
+  getOrderStatusColor,
+  getAllowedOnlineStatusOptions,
+  getDefaultNextOnlineStatus,
+  canUpdateOnlineStatus,
+} from '@/services/orderStatus';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { toast } from 'sonner';
 
@@ -91,7 +96,7 @@ export function OrdersOnlinePage() {
 
   const handleViewDetail = (order: OnlineOrder) => {
     setSelectedOrder(order);
-    setNewStatus(order.status);
+    setNewStatus(getDefaultNextOnlineStatus(order.status));
     setCancelReason('');
     setIsDetailOpen(true);
   };
@@ -334,6 +339,7 @@ export function OrdersOnlinePage() {
                 </div>
 
                 {/* Update Status */}
+                {selectedOrder && canUpdateOnlineStatus(selectedOrder.status) ? (
                 <div>
                   <h3 className="font-semibold mb-3">Cập nhật trạng thái</h3>
                   <div className="space-y-4">
@@ -344,11 +350,11 @@ export function OrdersOnlinePage() {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="CHO_XAC_NHAN">Chờ xác nhận</SelectItem>
-                          <SelectItem value="DANG_XU_LY">Đang xử lý</SelectItem>
-                          <SelectItem value="DANG_GIAO">Đang giao</SelectItem>
-                          <SelectItem value="HOAN_THANH">Hoàn thành</SelectItem>
-                          <SelectItem value="DA_HUY">Đã hủy</SelectItem>
+                          {getAllowedOnlineStatusOptions(selectedOrder.status).map((status) => (
+                            <SelectItem key={status} value={status}>
+                              {getOrderStatusLabel(status)}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </div>
@@ -373,19 +379,25 @@ export function OrdersOnlinePage() {
                     )}
                   </div>
                 </div>
+                ) : (
+                  <p className="text-sm text-gray-500 py-2">
+                    Đơn đã hoàn thành hoặc đã hủy — không thể cập nhật trạng thái.
+                  </p>
+                )}
 
                 {/* Actions */}
                 <div className="flex justify-end gap-3 pt-4">
                   <Button variant="outline" onClick={() => setIsDetailOpen(false)}>
                     Đóng
                   </Button>
+                  {selectedOrder && canUpdateOnlineStatus(selectedOrder.status) && (
                   <Button
                     onClick={handleUpdateStatus}
                     className="bg-[#8B7355] hover:bg-[#6F5B44]"
-                    disabled={newStatus === selectedOrder.status}
                   >
                     Cập nhật trạng thái
                   </Button>
+                  )}
                 </div>
               </div>
             )}

@@ -10,6 +10,12 @@ import type { OnlineOrder, OrderStatus } from '@/types/modules';
 
 export type { OnlineOrder, OrderStatus } from '@/types/modules';
 export { getOrderStatusLabel, getOrderStatusColor } from './orderStatus';
+export {
+  getNextOnlineStatuses,
+  getAllowedOnlineStatusOptions,
+  getDefaultNextOnlineStatus,
+  canUpdateOnlineStatus,
+} from './orderStatus';
 
 export async function getOnlineOrders(trangThai?: string): Promise<OnlineOrder[]> {
   const query = trangThai ? `?trangThai=${encodeURIComponent(trangThai)}` : '';

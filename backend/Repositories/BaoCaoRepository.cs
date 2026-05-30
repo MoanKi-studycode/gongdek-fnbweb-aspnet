@@ -24,7 +24,7 @@ public class BaoCaoRepository : IBaoCaoRepository
 
         var chiTiet = await _context.HoaDons
             .Include(h => h.NhanVienLap)
-            .Where(h => h.TrangThaiHoaDon == TrangThaiHoaDon.HoanThanh
+            .Where(h => TrangThaiHoaDonDaThanhToan.Values.Contains(h.TrangThaiHoaDon)
                 && h.ThoiGianLap >= tu
                 && h.ThoiGianLap <= den)
             .OrderBy(h => h.ThoiGianLap)

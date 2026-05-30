@@ -82,6 +82,8 @@ Web: http://localhost:5173 (proxy `/api` và `/images/products` → backend)
 - `SecurityAuditReport.md` — rà soát bảo mật, tách secret khỏi repo
 - `FinalCleanupReport.md` — chuẩn hóa UI confirm/toast, dọn code, build check
 
+**Doanh thu:** Dashboard và báo cáo Excel/PDF dùng chung tiêu chí hóa đơn đã thanh toán (`DaThanhToan`, `ChoPhaChe`, `HoanThanh`).
+
 ## GitLab workflow
 
 Repository: https://gitlab.com/moanki-studycode-group/GongDek

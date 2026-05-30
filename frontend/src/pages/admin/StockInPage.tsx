@@ -71,7 +71,6 @@ const statusApiToUi: Record<StockInFilter, StockInStatus | 'ALL'> = {
   ALL: 'ALL',
   ChoDuyet: 'CHO_DUYET',
   DaDuyet: 'DA_DUYET',
-  HoanThanh: 'HOAN_THANH',
   Huy: 'HUY',
 };
 
@@ -329,12 +328,11 @@ export function StockInPage() {
           </div>
         </div>
 
-        <div className="mb-6 grid grid-cols-2 gap-4 md:grid-cols-5">
+        <div className="mb-6 grid grid-cols-2 gap-4 md:grid-cols-4">
           {([
             ['ALL', 'Tất cả'],
             ['ChoDuyet', 'Chờ duyệt'],
             ['DaDuyet', 'Đã duyệt'],
-            ['HoanThanh', 'Hoàn thành'],
             ['Huy', 'Đã hủy'],
           ] as [StockInFilter, string][]).map(([status, label]) => (
             <button

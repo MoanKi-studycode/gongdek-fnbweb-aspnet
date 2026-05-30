@@ -32,8 +32,8 @@ import {
   getInvoices,
   type InvoiceQuery,
 } from '@/services/invoiceService';
-import { getOrderStatusColor, getOrderStatusLabel } from '@/services/orderStatus';
-import type { Invoice } from '@/types/modules';
+import { getCustomerOrderStatus } from '@/services/orderStatus';
+import type { Invoice, OrderStatus } from '@/types/modules';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { notifyError, notifySuccess } from '@/components/common/ToastMessage';
 
@@ -47,21 +47,7 @@ type InvoiceStatusFilter =
   | 'HoanThanh'
   | 'DaHuy';
 
-const INVOICE_STATUS_LABELS: Record<string, string> = {
-  ChoThanhToan: 'Chờ thanh toán',
-  DaThanhToan: 'Đã thanh toán',
-  ChoPhaChe: 'Chờ pha chế',
-  HoanThanh: 'Hoàn thành',
-  DaHuy: 'Đã hủy',
-};
-
-const INVOICE_STATUS_COLORS: Record<string, string> = {
-  ChoThanhToan: 'bg-orange-100 text-orange-700',
-  DaThanhToan: 'bg-teal-100 text-teal-700',
-  ChoPhaChe: 'bg-blue-100 text-blue-700',
-  HoanThanh: 'bg-green-100 text-green-700',
-  DaHuy: 'bg-gray-100 text-gray-700',
-};
+type OnlineStatusFilter = 'ALL' | OrderStatus;
 
 interface InvoicesManagerProps {
   /** Chế độ nhân viên: mặc định lọc hóa đơn do mình lập */
@@ -112,6 +98,7 @@ export function InvoicesManager({ employeeMode = false, currentEmployeeName }: I
   const [dateFilter, setDateFilter] = useState<DateFilter>(employeeMode ? 'TODAY' : 'ALL');
   const [orderTypeFilter, setOrderTypeFilter] = useState<OrderTypeFilter>('ALL');
   const [statusFilter, setStatusFilter] = useState<InvoiceStatusFilter>('ALL');
+  const [onlineStatusFilter, setOnlineStatusFilter] = useState<OnlineStatusFilter>('ALL');
   const [mineOnly, setMineOnly] = useState(employeeMode);
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
@@ -123,7 +110,8 @@ export function InvoicesManager({ employeeMode = false, currentEmployeeName }: I
     try {
       const query: InvoiceQuery = {
         ...buildDateQuery(dateFilter),
-        trangThai: statusFilter === 'ALL' ? undefined : statusFilter,
+        trangThai:
+          orderTypeFilter === 'TaiQuay' && statusFilter !== 'ALL' ? statusFilter : undefined,
       };
       const data = await getInvoices(query);
       setInvoices(data);
@@ -132,7 +120,7 @@ export function InvoicesManager({ employeeMode = false, currentEmployeeName }: I
     } finally {
       setLoading(false);
     }
-  }, [dateFilter, statusFilter]);
+  }, [dateFilter, statusFilter, orderTypeFilter]);
 
   useEffect(() => {
     void loadInvoices();
@@ -147,6 +135,12 @@ export function InvoicesManager({ employeeMode = false, currentEmployeeName }: I
       if (orderTypeFilter !== 'ALL' && inv.loaiDon !== orderTypeFilter) {
         return false;
       }
+      if (orderTypeFilter === 'Online' && onlineStatusFilter !== 'ALL') {
+        if (inv.orderStatus !== onlineStatusFilter) return false;
+      }
+      if (orderTypeFilter === 'TaiQuay' && statusFilter !== 'ALL') {
+        if (inv.invoiceStatus !== statusFilter) return false;
+      }
       if (!keyword) return true;
       return (
         inv.invoiceCode.toLowerCase().includes(keyword) ||
@@ -155,7 +149,7 @@ export function InvoicesManager({ employeeMode = false, currentEmployeeName }: I
         inv.employeeName.toLowerCase().includes(keyword)
       );
     });
-  }, [invoices, searchQuery, orderTypeFilter, mineOnly, currentEmployeeName]);
+  }, [invoices, searchQuery, orderTypeFilter, onlineStatusFilter, statusFilter, mineOnly, currentEmployeeName]);
 
   const totalRevenue = filteredInvoices.reduce((sum, inv) => sum + inv.total, 0);
 
@@ -174,19 +168,8 @@ export function InvoicesManager({ employeeMode = false, currentEmployeeName }: I
   };
 
   const renderStatusBadge = (invoice: Invoice) => {
-    if (invoice.loaiDon === 'Online' && invoice.orderStatus) {
-      return (
-        <Badge className={getOrderStatusColor(invoice.orderStatus)}>
-          {getOrderStatusLabel(invoice.orderStatus)}
-        </Badge>
-      );
-    }
-    const status = invoice.invoiceStatus ?? 'HoanThanh';
-    return (
-      <Badge className={INVOICE_STATUS_COLORS[status] ?? 'bg-gray-100 text-gray-700'}>
-        {INVOICE_STATUS_LABELS[status] ?? status}
-      </Badge>
-    );
+    const { label, color } = getCustomerOrderStatus(invoice);
+    return <Badge className={color}>{label}</Badge>;
   };
 
   return (
@@ -254,7 +237,12 @@ export function InvoicesManager({ employeeMode = false, currentEmployeeName }: I
             </Select>
             <Select
               value={orderTypeFilter}
-              onValueChange={(v) => setOrderTypeFilter(v as OrderTypeFilter)}
+              onValueChange={(v) => {
+                const next = v as OrderTypeFilter;
+                setOrderTypeFilter(next);
+                setStatusFilter('ALL');
+                setOnlineStatusFilter('ALL');
+              }}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Loại đơn" />
@@ -265,22 +253,41 @@ export function InvoicesManager({ employeeMode = false, currentEmployeeName }: I
                 <SelectItem value="Online">Đơn online</SelectItem>
               </SelectContent>
             </Select>
-            <Select
-              value={statusFilter}
-              onValueChange={(v) => setStatusFilter(v as InvoiceStatusFilter)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Trạng thái HĐ" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ALL">Mọi trạng thái</SelectItem>
-                <SelectItem value="ChoThanhToan">Chờ thanh toán</SelectItem>
-                <SelectItem value="DaThanhToan">Đã thanh toán</SelectItem>
-                <SelectItem value="ChoPhaChe">Chờ pha chế</SelectItem>
-                <SelectItem value="HoanThanh">Hoàn thành</SelectItem>
-                <SelectItem value="DaHuy">Đã hủy</SelectItem>
-              </SelectContent>
-            </Select>
+            {orderTypeFilter === 'Online' ? (
+              <Select
+                value={onlineStatusFilter}
+                onValueChange={(v) => setOnlineStatusFilter(v as OnlineStatusFilter)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Trạng thái đơn online" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL">Mọi trạng thái</SelectItem>
+                  <SelectItem value="CHO_XAC_NHAN">Chờ xác nhận</SelectItem>
+                  <SelectItem value="DANG_XU_LY">Đang xử lý</SelectItem>
+                  <SelectItem value="DANG_GIAO">Đang giao</SelectItem>
+                  <SelectItem value="HOAN_THANH">Hoàn thành</SelectItem>
+                  <SelectItem value="DA_HUY">Đã hủy</SelectItem>
+                </SelectContent>
+              </Select>
+            ) : (
+              <Select
+                value={statusFilter}
+                onValueChange={(v) => setStatusFilter(v as InvoiceStatusFilter)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Trạng thái HĐ" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL">Mọi trạng thái</SelectItem>
+                  <SelectItem value="ChoThanhToan">Chờ thanh toán</SelectItem>
+                  <SelectItem value="DaThanhToan">Đã thanh toán</SelectItem>
+                  <SelectItem value="ChoPhaChe">Đang pha chế</SelectItem>
+                  <SelectItem value="HoanThanh">Hoàn thành</SelectItem>
+                  <SelectItem value="DaHuy">Đã hủy</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
             {employeeMode && currentEmployeeName && (
               <Button
                 type="button"

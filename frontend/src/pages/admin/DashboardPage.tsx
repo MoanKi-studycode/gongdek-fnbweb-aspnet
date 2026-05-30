@@ -48,7 +48,7 @@ export function DashboardPage() {
   const handleConfirmOrder = async (maHoaDon: number) => {
     setConfirmingId(maHoaDon);
     try {
-      await updateOnlineOrderStatus(maHoaDon, 'processing');
+      await updateOnlineOrderStatus(maHoaDon, 'DANG_XU_LY');
       toast.success(`Đã xác nhận đơn #HD${String(maHoaDon).padStart(4, '0')}`);
       await loadDashboard();
     } catch (err) {

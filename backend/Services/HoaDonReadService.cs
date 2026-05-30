@@ -138,6 +138,7 @@ public class HoaDonReadService : IHoaDonReadService
             MaHoaDon = h.MaHoaDon,
             LoaiDon = h.LoaiDon,
             TrangThaiHoaDon = h.TrangThaiHoaDon,
+            TrangThaiOnline = h.DonHangOnline?.TrangThaiOnline,
             TenKhachHang = tenKhach,
             SoDienThoaiKhach = sdt,
             TenNhanVienLap = h.NhanVienLap.HoTen,

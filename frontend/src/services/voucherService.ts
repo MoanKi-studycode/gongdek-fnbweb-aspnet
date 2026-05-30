@@ -17,6 +17,7 @@ export interface VoucherApi {
 }
 
 export function mapVoucherApi(dto: VoucherApi): Voucher {
+  const status = dto.trangThai === 'HetHan' ? 'HetHan' : 'ConHieuLuc';
   return {
     id: String(dto.maVoucher),
     code: dto.maCode,
@@ -26,7 +27,18 @@ export function mapVoucherApi(dto: VoucherApi): Voucher {
     minOrder: dto.donHangToiThieu ?? 0,
     maxDiscount: dto.giamToiDa ?? undefined,
     expiryDate: dto.ngayKetThuc,
+    status,
   };
+}
+
+export function getVoucherStatusBadge(voucher: Voucher): { label: string; className: string } {
+  if (voucher.status === 'HetHan') {
+    return { label: 'Ngừng hiệu lực', className: 'bg-gray-100 text-gray-700' };
+  }
+  if (isVoucherExpired(voucher)) {
+    return { label: 'Hết hạn', className: 'bg-red-100 text-red-700' };
+  }
+  return { label: 'Còn hiệu lực', className: 'bg-green-100 text-green-700' };
 }
 
 export async function getVouchers(): Promise<Voucher[]> {
@@ -41,15 +53,16 @@ export function isVoucherExpired(voucher: Voucher): boolean {
 export async function findVoucherByCode(code: string): Promise<Voucher | null> {
   try {
     const data = await apiClient.get<VoucherApi>(`/voucher/code/${encodeURIComponent(code)}`);
-    if (data.trangThai !== 'ConHieuLuc') return null;
-    return mapVoucherApi(data);
+    const voucher = mapVoucherApi(data);
+    if (voucher.status !== 'ConHieuLuc' || isVoucherExpired(voucher)) return null;
+    return voucher;
   } catch {
     return null;
   }
 }
 
 export function isVoucherValid(voucher: Voucher, orderTotal: number): boolean {
-  if (isVoucherExpired(voucher)) return false;
+  if (voucher.status !== 'ConHieuLuc' || isVoucherExpired(voucher)) return false;
   return orderTotal >= voucher.minOrder;
 }
 

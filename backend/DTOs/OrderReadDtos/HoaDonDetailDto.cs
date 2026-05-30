@@ -5,6 +5,7 @@ public class HoaDonDetailDto
     public int MaHoaDon { get; set; }
     public string LoaiDon { get; set; } = null!;
     public string TrangThaiHoaDon { get; set; } = null!;
+    public string? TrangThaiOnline { get; set; }
     public string? TenKhachHang { get; set; }
     public string? SoDienThoaiKhach { get; set; }
     public string TenNhanVienLap { get; set; } = null!;

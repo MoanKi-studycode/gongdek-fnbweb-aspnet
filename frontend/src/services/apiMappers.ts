@@ -141,6 +141,7 @@ export function mapOnlineStatusToApi(status: OrderStatus): string {
 }
 
 export function mapHoaDonDetailToInvoice(dto: HoaDonDetailApi): Invoice {
+  const loaiDon = dto.loaiDon === 'Online' ? 'Online' : 'TaiQuay';
   return {
     id: String(dto.maHoaDon),
     invoiceCode: String(dto.maHoaDon).padStart(4, '0'),
@@ -160,6 +161,9 @@ export function mapHoaDonDetailToInvoice(dto: HoaDonDetailApi): Invoice {
     total: dto.tongThanhToan,
     paymentMethod: mapPaymentMethod(dto.phuongThucThanhToan),
     createdAt: dto.thoiGianLap,
+    loaiDon,
+    orderStatus: dto.trangThaiOnline ? mapOnlineStatus(dto.trangThaiOnline) : undefined,
+    invoiceStatus: dto.trangThaiHoaDon,
   };
 }
 

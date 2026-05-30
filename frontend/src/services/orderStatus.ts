@@ -22,6 +22,34 @@ export function getOrderStatusColor(status: OrderStatus): string {
   return colors[status];
 }
 
+/** Trạng thái tiếp theo hợp lệ theo workflow backend */
+export function getNextOnlineStatuses(current: OrderStatus): OrderStatus[] {
+  switch (current) {
+    case 'CHO_XAC_NHAN':
+      return ['DANG_XU_LY', 'DA_HUY'];
+    case 'DANG_XU_LY':
+      return ['DANG_GIAO', 'DA_HUY'];
+    case 'DANG_GIAO':
+      return ['HOAN_THANH', 'DA_HUY'];
+    default:
+      return [];
+  }
+}
+
+export function canUpdateOnlineStatus(current: OrderStatus): boolean {
+  return getNextOnlineStatuses(current).length > 0;
+}
+
+/** Trạng thái hiển thị trong dropdown cập nhật (trạng thái kế tiếp hợp lệ) */
+export function getAllowedOnlineStatusOptions(current: OrderStatus): OrderStatus[] {
+  const next = getNextOnlineStatuses(current);
+  return next.length > 0 ? next : [current];
+}
+
+export function getDefaultNextOnlineStatus(current: OrderStatus): OrderStatus {
+  return getNextOnlineStatuses(current)[0] ?? current;
+}
+
 const POS_INVOICE_STATUS_LABELS: Record<string, string> = {
   HoanThanh: 'Hoàn thành',
   ChoPhaChe: 'Đang pha chế',
@@ -37,6 +65,14 @@ const POS_INVOICE_STATUS_COLORS: Record<string, string> = {
   ChoThanhToan: 'bg-orange-100 text-orange-700',
   DaHuy: 'bg-gray-100 text-gray-700',
 };
+
+export function getPosInvoiceStatusLabel(status: string): string {
+  return POS_INVOICE_STATUS_LABELS[status] ?? status;
+}
+
+export function getPosInvoiceStatusColor(status: string): string {
+  return POS_INVOICE_STATUS_COLORS[status] ?? 'bg-gray-100 text-gray-700';
+}
 
 /** Nhãn trạng thái đơn hiển thị cho khách hàng */
 export function getCustomerOrderStatus(invoice: {
