@@ -40,6 +40,8 @@ import {
 import { resolveProductImageUrl } from '@/lib/productImage';
 import { getCategories, type Category } from '@/services/categoryService';
 import { toast } from 'sonner';
+import { deleteConfirmOptions, useConfirm } from '@/components/common/ConfirmDialog';
+import { notifyError, notifySuccess, toastMessages } from '@/components/common/ToastMessage';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 
 const STATUS_LABEL: Record<ProductStatus, string> = {
@@ -65,6 +67,7 @@ const EMPTY_FORM = {
 };
 
 export function ProductsPage() {
+  const { confirm } = useConfirm();
   const [products, setProducts] = useState<AdminProduct[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
@@ -199,17 +202,21 @@ export function ProductsPage() {
   };
 
   const handleDelete = async (product: AdminProduct) => {
-    if (!confirm(`Bạn có chắc muốn xóa sản phẩm "${product.name}" không?`)) {
-      return;
-    }
+    const ok = await confirm(
+      deleteConfirmOptions(
+        'sản phẩm',
+        `Bạn có chắc chắn muốn xóa sản phẩm "${product.name}" không? Thao tác này không thể hoàn tác.`,
+      ),
+    );
+    if (!ok) return;
 
     try {
       await deleteProduct(product.maSanPham);
-      toast.success('Xóa sản phẩm thành công!');
+      notifySuccess(toastMessages.deleteSuccess);
       await loadProducts();
       await loadCategories();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Không thể xóa sản phẩm.');
+      notifyError(err, 'Không thể xóa sản phẩm.');
     }
   };
 

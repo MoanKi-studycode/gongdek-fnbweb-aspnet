@@ -4,16 +4,19 @@ import { POSProvider } from '@/contexts/POSContext';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { Toaster } from '@/components/ui/sonner';
 import { ErrorBoundary } from '@/components/common/ErrorBoundary';
+import { ConfirmProvider } from '@/components/common/ConfirmDialog';
 
 export default function App() {
   return (
     <ErrorBoundary>
-      <AuthProvider>
-        <POSProvider>
-          <RouterProvider router={router} />
-          <Toaster />
-        </POSProvider>
-      </AuthProvider>
+      <ConfirmProvider>
+        <AuthProvider>
+          <POSProvider>
+            <RouterProvider router={router} />
+            <Toaster />
+          </POSProvider>
+        </AuthProvider>
+      </ConfirmProvider>
     </ErrorBoundary>
   );
 }

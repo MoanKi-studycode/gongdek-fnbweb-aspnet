@@ -29,6 +29,8 @@ import {
 } from '@/components/ui/dialog';
 import { Card, CardContent } from '@/components/ui/card';
 import { Plus, Edit, Trash2 } from 'lucide-react';
+import { deleteConfirmOptions, useConfirm } from '@/components/common/ConfirmDialog';
+import { notifyError, notifySuccess, toastMessages } from '@/components/common/ToastMessage';
 import { toast } from 'sonner';
 import {
   createCategory,
@@ -55,6 +57,7 @@ const emptyForm: FormData = {
 };
 
 export function CategoriesPage() {
+  const { confirm } = useConfirm();
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -139,12 +142,15 @@ export function CategoriesPage() {
       return;
     }
 
-    if (!confirm(`Bạn có chắc muốn xóa danh mục "${category.name}"?`)) return;
+    const ok = await confirm(
+      deleteConfirmOptions('danh mục', `Bạn có chắc muốn xóa danh mục "${category.name}"?`),
+    );
+    if (!ok) return;
 
     try {
       await deleteCategory(category.maDanhMuc);
       setCategories((prev) => prev.filter((c) => c.maDanhMuc !== category.maDanhMuc));
-      toast.success('Xóa danh mục thành công!');
+      notifySuccess(toastMessages.deleteSuccess);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Xóa danh mục thất bại!');
     }

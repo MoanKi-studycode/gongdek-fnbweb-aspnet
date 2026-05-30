@@ -12,7 +12,7 @@ public interface ICaLamViecRepository
         int? maKhungCa,
         string? trangThaiCa);
 
-    Task<List<CaLamViec>> GetDangMoAsync();
+    Task<List<CaLamViec>> GetDangMoAsync(int? maNV = null);
     Task<CaLamViec?> GetByIdAsync(int maCa);
     Task<bool> HasOpenShiftAsync(int maNV);
     Task AddAsync(CaLamViec ca);

@@ -45,12 +45,39 @@ public class HoaDonReadService : IHoaDonReadService
                 MaHoaDon = h.MaHoaDon,
                 LoaiDon = h.LoaiDon,
                 TrangThaiHoaDon = h.TrangThaiHoaDon,
+                TrangThaiOnline = h.DonHangOnline != null ? h.DonHangOnline.TrangThaiOnline : null,
                 TenKhachHang = h.KhachHang != null
                     ? h.KhachHang.HoTen
                     : h.DonHangOnline != null ? h.DonHangOnline.HoTenNhanHang : null,
                 SoDienThoaiKhach = h.KhachHang != null
                     ? h.KhachHang.SoDienThoai
                     : h.DonHangOnline != null ? h.DonHangOnline.SoDienThoaiNhan : null,
+                TenNhanVienLap = h.NhanVienLap.HoTen,
+                ThoiGianLap = h.ThoiGianLap,
+                TongThanhToan = h.TongThanhToan,
+                PhuongThucThanhToan = h.PhuongThucThanhToan,
+            })
+            .ToListAsync();
+    }
+
+    public async Task<List<HoaDonListDto>> GetByKhachHangAsync(int maKh, int? limit = null)
+    {
+        IQueryable<HoaDon> query = _context.HoaDons
+            .Where(h => h.MaKH == maKh)
+            .OrderByDescending(h => h.ThoiGianLap);
+
+        if (limit is > 0)
+            query = query.Take(limit.Value);
+
+        return await query
+            .Select(h => new HoaDonListDto
+            {
+                MaHoaDon = h.MaHoaDon,
+                LoaiDon = h.LoaiDon,
+                TrangThaiHoaDon = h.TrangThaiHoaDon,
+                TrangThaiOnline = h.DonHangOnline != null ? h.DonHangOnline.TrangThaiOnline : null,
+                TenKhachHang = h.KhachHang != null ? h.KhachHang.HoTen : null,
+                SoDienThoaiKhach = h.KhachHang != null ? h.KhachHang.SoDienThoai : null,
                 TenNhanVienLap = h.NhanVienLap.HoTen,
                 ThoiGianLap = h.ThoiGianLap,
                 TongThanhToan = h.TongThanhToan,
@@ -73,6 +100,27 @@ public class HoaDonReadService : IHoaDonReadService
                 .ThenInclude(ct => ct.ChiTietHoaDonToppings)
                     .ThenInclude(t => t.Topping)
             .FirstOrDefaultAsync(h => h.MaHoaDon == id);
+
+        if (hoaDon == null)
+            throw new KeyNotFoundException($"Không tìm thấy hóa đơn #{id}.");
+
+        return MapDetail(hoaDon);
+    }
+
+    public async Task<HoaDonDetailDto> GetByIdForKhachHangAsync(int maKh, int id)
+    {
+        var hoaDon = await _context.HoaDons
+            .Include(h => h.KhachHang)
+            .Include(h => h.NhanVienLap)
+            .Include(h => h.DonHangOnline)
+            .Include(h => h.ChiTietHoaDons)
+                .ThenInclude(ct => ct.SanPham)
+            .Include(h => h.ChiTietHoaDons)
+                .ThenInclude(ct => ct.Size)
+            .Include(h => h.ChiTietHoaDons)
+                .ThenInclude(ct => ct.ChiTietHoaDonToppings)
+                    .ThenInclude(t => t.Topping)
+            .FirstOrDefaultAsync(h => h.MaHoaDon == id && h.MaKH == maKh);
 
         if (hoaDon == null)
             throw new KeyNotFoundException($"Không tìm thấy hóa đơn #{id}.");

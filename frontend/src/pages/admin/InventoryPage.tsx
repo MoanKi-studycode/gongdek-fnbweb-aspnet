@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Table,
   TableBody,
@@ -28,23 +27,19 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
-import { Plus, Edit, Search, AlertTriangle, Package, Trash2, Truck } from 'lucide-react';
+import { Plus, Edit, Search, AlertTriangle, Package, Trash2 } from 'lucide-react';
 import {
   createNguyenLieu,
-  createNhaCungCap,
   deleteNguyenLieu,
-  deleteNhaCungCap,
   dieuChinhTonKho,
   getNguyenLieus,
-  getNhaCungCaps,
   updateNguyenLieu,
-  updateNhaCungCap,
   type DieuChinhTonLoai,
   type NguyenLieu,
   type NguyenLieuStatus,
-  type NhaCungCap,
-  type NhaCungCapStatus,
 } from '@/services/inventoryService';
+import { deleteConfirmOptions, useConfirm } from '@/components/common/ConfirmDialog';
+import { notifyError, notifySuccess, toastMessages } from '@/components/common/ToastMessage';
 import { toast } from 'sonner';
 
 type NguyenLieuForm = {
@@ -56,15 +51,6 @@ type NguyenLieuForm = {
   trangThai: NguyenLieuStatus;
 };
 
-type NhaCungCapForm = {
-  tenNCC: string;
-  soDienThoai: string;
-  email: string;
-  diaChi: string;
-  nguoiLienHe: string;
-  trangThai: NhaCungCapStatus;
-};
-
 const defaultNguyenLieuForm: NguyenLieuForm = {
   tenNL: '',
   donViTinh: 'kg',
@@ -74,15 +60,6 @@ const defaultNguyenLieuForm: NguyenLieuForm = {
   trangThai: 'ConHang',
 };
 
-const defaultNhaCungCapForm: NhaCungCapForm = {
-  tenNCC: '',
-  soDienThoai: '',
-  email: '',
-  diaChi: '',
-  nguoiLienHe: '',
-  trangThai: 'DangHopTac',
-};
-
 const nguyenLieuStatusLabels: Record<NguyenLieuStatus, string> = {
   ConHang: 'Còn hàng',
   SapHet: 'Sắp hết',
@@ -90,49 +67,34 @@ const nguyenLieuStatusLabels: Record<NguyenLieuStatus, string> = {
   NgungSuDung: 'Ngừng sử dụng',
 };
 
-const nhaCungCapStatusLabels: Record<NhaCungCapStatus, string> = {
-  DangHopTac: 'Đang hợp tác',
-  NgungHopTac: 'Ngừng hợp tác',
-};
-
 const statusColors: Record<string, string> = {
   ConHang: 'bg-green-100 text-green-700',
   SapHet: 'bg-yellow-100 text-yellow-700',
   HetHang: 'bg-red-100 text-red-700',
   NgungSuDung: 'bg-gray-100 text-gray-700',
-  DangHopTac: 'bg-green-100 text-green-700',
-  NgungHopTac: 'bg-gray-100 text-gray-700',
 };
 
 export function InventoryPage() {
+  const { confirm } = useConfirm();
   const [nguyenLieus, setNguyenLieus] = useState<NguyenLieu[]>([]);
-  const [nhaCungCaps, setNhaCungCaps] = useState<NhaCungCap[]>([]);
   const [searchNguyenLieu, setSearchNguyenLieu] = useState('');
-  const [searchNhaCungCap, setSearchNhaCungCap] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
   const [loading, setLoading] = useState(false);
 
   const [isNguyenLieuDialogOpen, setIsNguyenLieuDialogOpen] = useState(false);
-  const [isNhaCungCapDialogOpen, setIsNhaCungCapDialogOpen] = useState(false);
   const [isAdjustDialogOpen, setIsAdjustDialogOpen] = useState(false);
   const [editingNguyenLieu, setEditingNguyenLieu] = useState<NguyenLieu | null>(null);
-  const [editingNhaCungCap, setEditingNhaCungCap] = useState<NhaCungCap | null>(null);
   const [adjustingItem, setAdjustingItem] = useState<NguyenLieu | null>(null);
   const [adjustAmount, setAdjustAmount] = useState('');
   const [adjustType, setAdjustType] = useState<DieuChinhTonLoai>('Nhap');
 
   const [nguyenLieuForm, setNguyenLieuForm] = useState<NguyenLieuForm>(defaultNguyenLieuForm);
-  const [nhaCungCapForm, setNhaCungCapForm] = useState<NhaCungCapForm>(defaultNhaCungCapForm);
 
   const loadData = async () => {
     setLoading(true);
     try {
-      const [nguyenLieuData, nhaCungCapData] = await Promise.all([
-        getNguyenLieus(),
-        getNhaCungCaps(),
-      ]);
+      const nguyenLieuData = await getNguyenLieus();
       setNguyenLieus(nguyenLieuData);
-      setNhaCungCaps(nhaCungCapData);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Không tải được dữ liệu kho');
     } finally {
@@ -157,19 +119,6 @@ export function InventoryPage() {
     });
   }, [nguyenLieus, searchNguyenLieu, statusFilter]);
 
-  const filteredNhaCungCaps = useMemo(() => {
-    const keyword = searchNhaCungCap.trim().toLowerCase();
-    return nhaCungCaps.filter((item) => {
-      return (
-        !keyword ||
-        item.tenNCC.toLowerCase().includes(keyword) ||
-        String(item.maNCC).includes(keyword) ||
-        (item.soDienThoai ?? '').toLowerCase().includes(keyword) ||
-        (item.email ?? '').toLowerCase().includes(keyword)
-      );
-    });
-  }, [nhaCungCaps, searchNhaCungCap]);
-
   const lowStockCount = nguyenLieus.filter((item) => item.canhBaoTonKho).length;
 
   const openNguyenLieuDialog = (item?: NguyenLieu) => {
@@ -188,24 +137,6 @@ export function InventoryPage() {
       setNguyenLieuForm(defaultNguyenLieuForm);
     }
     setIsNguyenLieuDialogOpen(true);
-  };
-
-  const openNhaCungCapDialog = (item?: NhaCungCap) => {
-    if (item) {
-      setEditingNhaCungCap(item);
-      setNhaCungCapForm({
-        tenNCC: item.tenNCC,
-        soDienThoai: item.soDienThoai ?? '',
-        email: item.email ?? '',
-        diaChi: item.diaChi ?? '',
-        nguoiLienHe: item.nguoiLienHe ?? '',
-        trangThai: item.trangThai,
-      });
-    } else {
-      setEditingNhaCungCap(null);
-      setNhaCungCapForm(defaultNhaCungCapForm);
-    }
-    setIsNhaCungCapDialogOpen(true);
   };
 
   const openAdjustDialog = (item: NguyenLieu) => {
@@ -242,52 +173,15 @@ export function InventoryPage() {
     }
   };
 
-  const handleSubmitNhaCungCap = async (event: FormEvent) => {
-    event.preventDefault();
-    try {
-      const payload = {
-        tenNCC: nhaCungCapForm.tenNCC.trim(),
-        soDienThoai: nhaCungCapForm.soDienThoai || null,
-        email: nhaCungCapForm.email || null,
-        diaChi: nhaCungCapForm.diaChi || null,
-        nguoiLienHe: nhaCungCapForm.nguoiLienHe || null,
-        trangThai: nhaCungCapForm.trangThai,
-      };
-
-      if (editingNhaCungCap) {
-        await updateNhaCungCap(editingNhaCungCap.maNCC, payload);
-        toast.success('Cập nhật nhà cung cấp thành công!');
-      } else {
-        await createNhaCungCap(payload);
-        toast.success('Thêm nhà cung cấp thành công!');
-      }
-
-      setIsNhaCungCapDialogOpen(false);
-      await loadData();
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Lưu nhà cung cấp thất bại');
-    }
-  };
-
   const handleDeleteNguyenLieu = async (item: NguyenLieu) => {
-    if (!confirm(`Xóa nguyên liệu "${item.tenNL}"?`)) return;
+    const ok = await confirm(deleteConfirmOptions('nguyên liệu', `Xóa nguyên liệu "${item.tenNL}"?`));
+    if (!ok) return;
     try {
       await deleteNguyenLieu(item.maNL);
-      toast.success('Xóa nguyên liệu thành công!');
+      notifySuccess(toastMessages.deleteSuccess);
       await loadData();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Xóa nguyên liệu thất bại');
-    }
-  };
-
-  const handleDeleteNhaCungCap = async (item: NhaCungCap) => {
-    if (!confirm(`Xóa nhà cung cấp "${item.tenNCC}"?`)) return;
-    try {
-      await deleteNhaCungCap(item.maNCC);
-      toast.success('Xóa nhà cung cấp thành công!');
-      await loadData();
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Xóa nhà cung cấp thất bại');
     }
   };
 
@@ -324,7 +218,7 @@ export function InventoryPage() {
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Quản lý kho</h1>
-            <p className="text-gray-600 mt-1">CRUD nguyên liệu, nhà cung cấp và cảnh báo tồn kho</p>
+            <p className="text-gray-600 mt-1">Quản lý nguyên liệu, điều chỉnh tồn kho và cảnh báo sắp hết</p>
           </div>
           <div className="flex items-center gap-4">
             <Card>
@@ -344,14 +238,8 @@ export function InventoryPage() {
           </div>
         </div>
 
-        <Tabs defaultValue="nguyen-lieu" className="space-y-6">
-          <TabsList>
-            <TabsTrigger value="nguyen-lieu">Nguyên liệu</TabsTrigger>
-            <TabsTrigger value="nha-cung-cap">Nhà cung cấp</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="nguyen-lieu" className="space-y-6">
-            <div className="grid grid-cols-3 gap-4">
+        <div className="space-y-6">
+          <div className="grid grid-cols-3 gap-4">
               <Card className="col-span-2">
                 <CardContent className="p-4">
                   <div className="relative">
@@ -448,83 +336,7 @@ export function InventoryPage() {
                 )}
               </CardContent>
             </Card>
-          </TabsContent>
-
-          <TabsContent value="nha-cung-cap" className="space-y-6">
-            <div className="grid grid-cols-3 gap-4">
-              <Card className="col-span-2">
-                <CardContent className="p-4">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-                    <Input
-                      placeholder="Tìm theo mã, tên, số điện thoại hoặc email..."
-                      value={searchNhaCungCap}
-                      onChange={(e) => setSearchNhaCungCap(e.target.value)}
-                      className="pl-10"
-                    />
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Button onClick={() => openNhaCungCapDialog()} className="h-full bg-[#8B7355] hover:bg-[#6F5B44]">
-                <Truck className="w-4 h-4 mr-2" />
-                Thêm nhà cung cấp
-              </Button>
-            </div>
-
-            <Card>
-              <CardContent className="p-6">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Mã</TableHead>
-                      <TableHead>Tên nhà cung cấp</TableHead>
-                      <TableHead>Người liên hệ</TableHead>
-                      <TableHead>Số điện thoại</TableHead>
-                      <TableHead>Email</TableHead>
-                      <TableHead>Địa chỉ</TableHead>
-                      <TableHead>Trạng thái</TableHead>
-                      <TableHead>Phiếu nhập</TableHead>
-                      <TableHead className="text-right">Thao tác</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredNhaCungCaps.map((item) => (
-                      <TableRow key={item.maNCC}>
-                        <TableCell className="font-mono text-sm">NCC{String(item.maNCC).padStart(3, '0')}</TableCell>
-                        <TableCell className="font-medium">{item.tenNCC}</TableCell>
-                        <TableCell>{item.nguoiLienHe || '-'}</TableCell>
-                        <TableCell>{item.soDienThoai || '-'}</TableCell>
-                        <TableCell>{item.email || '-'}</TableCell>
-                        <TableCell className="max-w-[220px] truncate">{item.diaChi || '-'}</TableCell>
-                        <TableCell>
-                          <Badge className={statusColors[item.trangThai]}>{nhaCungCapStatusLabels[item.trangThai]}</Badge>
-                        </TableCell>
-                        <TableCell>{item.soPhieuNhap}</TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex items-center justify-end gap-2">
-                            <Button variant="ghost" size="sm" onClick={() => openNhaCungCapDialog(item)}>
-                              <Edit className="w-4 h-4" />
-                            </Button>
-                            <Button variant="ghost" size="sm" onClick={() => handleDeleteNhaCungCap(item)}>
-                              <Trash2 className="w-4 h-4 text-red-600" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-
-                {filteredNhaCungCaps.length === 0 && (
-                  <div className="text-center py-12 text-gray-400">
-                    <p>Không tìm thấy nhà cung cấp</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+        </div>
 
         <Dialog open={isNguyenLieuDialogOpen} onOpenChange={setIsNguyenLieuDialogOpen}>
           <DialogContent className="max-w-2xl">
@@ -611,89 +423,6 @@ export function InventoryPage() {
                 </Button>
                 <Button type="submit" className="bg-[#8B7355] hover:bg-[#6F5B44]">
                   {editingNguyenLieu ? 'Cập nhật' : 'Thêm nguyên liệu'}
-                </Button>
-              </div>
-            </form>
-          </DialogContent>
-        </Dialog>
-
-        <Dialog open={isNhaCungCapDialogOpen} onOpenChange={setIsNhaCungCapDialogOpen}>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>{editingNhaCungCap ? 'Sửa nhà cung cấp' : 'Thêm nhà cung cấp'}</DialogTitle>
-              <DialogDescription>Nhập thông tin liên hệ của nhà cung cấp.</DialogDescription>
-            </DialogHeader>
-
-            <form onSubmit={handleSubmitNhaCungCap} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2 col-span-2">
-                  <Label>Tên nhà cung cấp *</Label>
-                  <Input
-                    value={nhaCungCapForm.tenNCC}
-                    onChange={(e) => setNhaCungCapForm({ ...nhaCungCapForm, tenNCC: e.target.value })}
-                    placeholder="Công ty nguyên liệu ABC"
-                    required
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Người liên hệ</Label>
-                  <Input
-                    value={nhaCungCapForm.nguoiLienHe}
-                    onChange={(e) => setNhaCungCapForm({ ...nhaCungCapForm, nguoiLienHe: e.target.value })}
-                    placeholder="Anh Nam"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Số điện thoại</Label>
-                  <Input
-                    value={nhaCungCapForm.soDienThoai}
-                    onChange={(e) => setNhaCungCapForm({ ...nhaCungCapForm, soDienThoai: e.target.value })}
-                    placeholder="0909123456"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Email</Label>
-                  <Input
-                    type="email"
-                    value={nhaCungCapForm.email}
-                    onChange={(e) => setNhaCungCapForm({ ...nhaCungCapForm, email: e.target.value })}
-                    placeholder="abc@gmail.com"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Trạng thái *</Label>
-                  <Select
-                    value={nhaCungCapForm.trangThai}
-                    onValueChange={(value: NhaCungCapStatus) => setNhaCungCapForm({ ...nhaCungCapForm, trangThai: value })}
-                  >
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="DangHopTac">Đang hợp tác</SelectItem>
-                      <SelectItem value="NgungHopTac">Ngừng hợp tác</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2 col-span-2">
-                  <Label>Địa chỉ</Label>
-                  <Input
-                    value={nhaCungCapForm.diaChi}
-                    onChange={(e) => setNhaCungCapForm({ ...nhaCungCapForm, diaChi: e.target.value })}
-                    placeholder="TP.HCM"
-                  />
-                </div>
-              </div>
-
-              <div className="flex justify-end gap-3 pt-4">
-                <Button type="button" variant="outline" onClick={() => setIsNhaCungCapDialogOpen(false)}>
-                  Hủy
-                </Button>
-                <Button type="submit" className="bg-[#8B7355] hover:bg-[#6F5B44]">
-                  {editingNhaCungCap ? 'Cập nhật' : 'Thêm nhà cung cấp'}
                 </Button>
               </div>
             </form>

@@ -17,6 +17,8 @@ import {
 } from '@/components/ui/sheet';
 import { Trash2, Minus, Plus, ShoppingBag, AlertCircle } from 'lucide-react';
 import { placeOnlineOrder } from '@/services/onlineOrderService';
+import { placeOrderConfirmOptions, useConfirm } from '@/components/common/ConfirmDialog';
+import { getErrorMessage, notifySuccess, toastMessages } from '@/components/common/ToastMessage';
 
 const PHI_GIAO_HANG = 15000;
 const LOGIN_RETURN_URL = '/?cart=open';
@@ -30,6 +32,7 @@ function formatPrice(price: number) {
 
 export function CartSheet() {
   const { user, isAuthenticated, hasRole } = useAuth();
+  const { confirm } = useConfirm();
   const loginHref = authPathWithReturn('/auth/login', LOGIN_RETURN_URL);
   const {
     cart,
@@ -81,6 +84,9 @@ export function CartSheet() {
       return;
     }
 
+    const ok = await confirm(placeOrderConfirmOptions());
+    if (!ok) return;
+
     setSubmitting(true);
     try {
       const result = await placeOnlineOrder({
@@ -97,8 +103,9 @@ export function CartSheet() {
       setPlacedOrderId(result.maHoaDon);
       setOrderPlaced(true);
       clearCart();
+      notifySuccess(toastMessages.orderSuccess);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Không thể đặt hàng. Vui lòng thử lại.');
+      setError(getErrorMessage(err, 'Không thể đặt hàng. Vui lòng thử lại.'));
     } finally {
       setSubmitting(false);
     }

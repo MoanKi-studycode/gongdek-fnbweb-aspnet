@@ -10,10 +10,18 @@
 
 # Dependencies
 frontend/node_modules/
+node_modules/
 
-# Environment
+# Environment & secrets (chỉ commit file example)
 frontend/.env
+frontend/.env.local
+frontend/.env.production
 !frontend/.env.example
+.env
+.env.local
+.env.production
+backend/appsettings.Development.json
+!backend/appsettings.example.json
 
 # OS / IDE
 .DS_Store
@@ -22,25 +30,8 @@ Thumbs.db
 *.log
 
 .fake
-# ASP.NET
 bin/
 obj/
 .vs/
-
-# Node
-node_modules/
-dist/
-
-# Logs
-*.log
-
-# Environment
-.env
-
-# Rider
-.idea/
-
-# Mac
-.DS_Store
 
 GONGDEK_AGENT_PLAN.md

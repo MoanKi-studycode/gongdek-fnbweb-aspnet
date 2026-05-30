@@ -29,6 +29,8 @@ import {
 } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
 import { CheckCircle, Eye, Plus, RefreshCw, Trash2, XCircle } from 'lucide-react';
+import { deleteConfirmOptions, useConfirm } from '@/components/common/ConfirmDialog';
+import { notifyError, notifySuccess, toastMessages } from '@/components/common/ToastMessage';
 import { toast } from 'sonner';
 import {
   approvePhieuNhapKho,
@@ -74,6 +76,7 @@ const statusApiToUi: Record<StockInFilter, StockInStatus | 'ALL'> = {
 };
 
 export function StockInPage() {
+  const { confirm } = useConfirm();
   const [records, setRecords] = useState<PhieuNhapKhoApi[]>([]);
   const [suppliers, setSuppliers] = useState<NhaCungCap[]>([]);
   const [ingredients, setIngredients] = useState<NguyenLieu[]>([]);
@@ -232,40 +235,76 @@ export function StockInPage() {
 
   const handleCancel = async () => {
     if (!selectedStockIn) return;
-    if (!confirm('Bạn có chắc muốn hủy phiếu nhập này?')) return;
+    const ok = await confirm({
+      title: 'Xác nhận hủy phiếu nhập',
+      message: 'Bạn có chắc muốn hủy phiếu nhập này?',
+      confirmText: 'Hủy phiếu',
+      cancelText: 'Quay lại',
+      variant: 'warning',
+    });
+    if (!ok) return;
 
     try {
       await cancelPhieuNhapKho(Number(selectedStockIn.id), selectedStockIn.notes || undefined);
-      toast.success('Đã hủy phiếu nhập kho');
+      notifySuccess('Đã hủy phiếu nhập kho.');
       setIsDetailOpen(false);
       await loadData();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Không hủy được phiếu nhập kho');
+      notifyError(error, 'Không hủy được phiếu nhập kho');
     }
   };
 
   const handleApprove = async () => {
     if (!selectedStockIn) return;
-    if (!confirm('Duyệt phiếu nhập này? Số lượng nguyên liệu sẽ được cộng vào tồn kho.')) return;
+    const ok = await confirm({
+      title: 'Xác nhận duyệt phiếu nhập',
+      message: 'Duyệt phiếu nhập này? Số lượng nguyên liệu sẽ được cộng vào tồn kho.',
+      confirmText: 'Duyệt',
+      cancelText: 'Hủy',
+      variant: 'success',
+    });
+    if (!ok) return;
 
     try {
       await approvePhieuNhapKho(Number(selectedStockIn.id), selectedStockIn.notes || undefined);
-      toast.success('Đã duyệt phiếu nhập và cập nhật tồn kho');
+      notifySuccess('Đã duyệt phiếu nhập và cập nhật tồn kho.');
       setIsDetailOpen(false);
       await loadData();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Không duyệt được phiếu nhập kho');
+      notifyError(error, 'Không duyệt được phiếu nhập kho');
+    }
+  };
+
+  const handleQuickApprove = async (stockIn: StockIn) => {
+    const ok = await confirm({
+      title: 'Xác nhận duyệt phiếu nhập',
+      message: `Duyệt phiếu nhập #${stockIn.code}? Số lượng nguyên liệu sẽ được cộng vào tồn kho.`,
+      confirmText: 'Duyệt',
+      cancelText: 'Hủy',
+      variant: 'success',
+    });
+    if (!ok) return;
+
+    try {
+      await approvePhieuNhapKho(Number(stockIn.id), stockIn.notes || undefined);
+      notifySuccess('Đã duyệt phiếu nhập và cập nhật tồn kho.');
+      await loadData();
+    } catch (error) {
+      notifyError(error, 'Không duyệt được phiếu nhập kho');
     }
   };
 
   const handleDelete = async (stockIn: StockIn) => {
-    if (!confirm(`Bạn có chắc muốn xóa phiếu nhập #${stockIn.code}?`)) return;
+    const ok = await confirm(
+      deleteConfirmOptions('phiếu nhập', `Bạn có chắc muốn xóa phiếu nhập #${stockIn.code}?`),
+    );
+    if (!ok) return;
     try {
       await deletePhieuNhapKho(Number(stockIn.id));
-      toast.success('Đã xóa phiếu nhập kho');
+      notifySuccess(toastMessages.deleteSuccess);
       await loadData();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Không xóa được phiếu nhập kho');
+      notifyError(error, 'Không xóa được phiếu nhập kho');
     }
   };
 
@@ -357,16 +396,7 @@ export function StockInPage() {
                                 variant="ghost"
                                 size="sm"
                                 className="text-green-700 hover:text-green-800"
-                                onClick={async () => {
-                                  if (!confirm(`Duyệt phiếu nhập #${stockIn.code}? Số lượng nguyên liệu sẽ được cộng vào tồn kho.`)) return;
-                                  try {
-                                    await approvePhieuNhapKho(Number(stockIn.id), stockIn.notes || undefined);
-                                    toast.success('Đã duyệt phiếu nhập và cập nhật tồn kho');
-                                    await loadData();
-                                  } catch (error) {
-                                    toast.error(error instanceof Error ? error.message : 'Không duyệt được phiếu nhập kho');
-                                  }
-                                }}
+                                onClick={() => handleQuickApprove(stockIn)}
                               >
                                 <CheckCircle className="mr-1 h-4 w-4" />
                                 Duyệt

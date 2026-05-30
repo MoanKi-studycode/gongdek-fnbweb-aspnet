@@ -7,6 +7,7 @@ import {
   FolderTree,
   Settings,
   Warehouse,
+  Building2,
   TruckIcon,
   Users,
   UserCircle,
@@ -17,6 +18,7 @@ import {
   Clock,
   LogOut,
 } from 'lucide-react';
+import { logoutConfirmOptions, useConfirm } from '@/components/common/ConfirmDialog';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface AdminLayoutProps {
@@ -29,6 +31,7 @@ const menuItems = [
   { path: '/admin/categories', icon: FolderTree, label: 'Quản lý danh mục' },
   { path: '/admin/size-topping', icon: Settings, label: 'Size & Topping' },
   { path: '/admin/inventory', icon: Warehouse, label: 'Quản lý kho' },
+  { path: '/admin/suppliers', icon: Building2, label: 'Quản lý nhà cung cấp' },
   { path: '/admin/stock-in', icon: TruckIcon, label: 'Quản lý nhập kho' },
   { path: '/admin/employees', icon: Users, label: 'Quản lý nhân viên' },
   { path: '/admin/shifts', icon: Clock, label: 'Quản lý ca làm việc' },
@@ -43,8 +46,11 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuth();
+  const { confirm } = useConfirm();
 
   const handleLogout = async () => {
+    const ok = await confirm(logoutConfirmOptions());
+    if (!ok) return;
     await logout();
     navigate('/auth/login');
   };

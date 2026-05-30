@@ -6,17 +6,20 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { DollarSign, ShoppingBag, Users, TrendingUp, AlertTriangle, Clock } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { toast } from 'sonner';
 import {
   getDashboardTongQuan,
   getStockAlertLabel,
   formatRelativeTime,
   type DashboardTongQuan,
 } from '@/services/reportService';
+import { updateOnlineOrderStatus } from '@/services/onlineOrderService';
 
 export function DashboardPage() {
   const [data, setData] = useState<DashboardTongQuan | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [confirmingId, setConfirmingId] = useState<number | null>(null);
 
   const formatCurrency = (value: number) =>
     new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
@@ -41,6 +44,19 @@ export function DashboardPage() {
   useEffect(() => {
     loadDashboard();
   }, [loadDashboard]);
+
+  const handleConfirmOrder = async (maHoaDon: number) => {
+    setConfirmingId(maHoaDon);
+    try {
+      await updateOnlineOrderStatus(maHoaDon, 'processing');
+      toast.success(`Đã xác nhận đơn #HD${String(maHoaDon).padStart(4, '0')}`);
+      await loadDashboard();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Không thể xác nhận đơn.');
+    } finally {
+      setConfirmingId(null);
+    }
+  };
 
   if (loading) {
     return (
@@ -204,18 +220,25 @@ export function DashboardPage() {
               {data.donOnlineCho.length > 0 ? (
                 <div className="space-y-3">
                   {data.donOnlineCho.map((order) => (
-                    <div key={order.maHoaDon} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                      <div className="flex-1">
+                    <div key={order.maHoaDon} className="flex items-center justify-between gap-3 p-3 bg-gray-50 rounded-lg">
+                      <div className="flex-1 min-w-0">
                         <div className="flex items-center space-x-2">
                           <span className="font-semibold text-gray-900">#HD{String(order.maHoaDon).padStart(4, '0')}</span>
-                          <span className="text-sm text-gray-600">- {order.hoTen}</span>
+                          <span className="text-sm text-gray-600 truncate">- {order.hoTen}</span>
                         </div>
                         <p className="text-xs text-gray-500 mt-1">{formatRelativeTime(order.thoiGianLap)}</p>
                       </div>
-                      <p className="font-semibold text-[#8B7355]">{formatCurrency(order.tongThanhToan)}</p>
+                      <p className="font-semibold text-[#8B7355] shrink-0">{formatCurrency(order.tongThanhToan)}</p>
+                      <Button
+                        size="sm"
+                        className="shrink-0 bg-[#8B7355] hover:bg-[#6F5B44]"
+                        disabled={confirmingId === order.maHoaDon}
+                        onClick={() => handleConfirmOrder(order.maHoaDon)}
+                      >
+                        {confirmingId === order.maHoaDon ? '...' : 'Xác nhận'}
+                      </Button>
                     </div>
                   ))}
-                  {/* TODO [Nguyễn Hoài Phương]: Xử lý xác nhận đơn online tại module POS/đơn online */}
                   <Link
                     to="/admin/orders-online"
                     className="block text-center text-sm text-blue-600 hover:underline mt-2"
@@ -259,7 +282,6 @@ export function DashboardPage() {
                       </span>
                     </div>
                   ))}
-                  {/* TODO [Trần Quốc Tiên]: Chi tiết quản lý kho nguyên liệu */}
                   <Link to="/admin/inventory">
                     <Button className="w-full mt-2 bg-[#8B7355] hover:bg-[#6F5B44]">
                       Xem kho nguyên liệu

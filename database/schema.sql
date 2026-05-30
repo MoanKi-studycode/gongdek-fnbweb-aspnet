@@ -23,7 +23,9 @@ CREATE TABLE [KhachHang] (
     [TrangThai] nvarchar(20) NOT NULL DEFAULT N'HoatDong',
     [NgayDangKy] datetime2 NOT NULL DEFAULT (sysdatetime()),
     CONSTRAINT [PK_KhachHang] PRIMARY KEY ([MaKH]),
-    CONSTRAINT [CK_KhachHang_Diem] CHECK ([DiemTichLuy] >= 0)
+    CONSTRAINT [CK_KhachHang_Diem] CHECK ([DiemTichLuy] >= 0),
+    CONSTRAINT [CK_KhachHang_Hang] CHECK ([HangThanhVien] IN (N'ThanhVien', N'Bac', N'Vang', N'KimCuong')),
+    CONSTRAINT [CK_KhachHang_TrangThai] CHECK ([TrangThai] IN (N'HoatDong', N'Khoa'))
 );
 GO
 

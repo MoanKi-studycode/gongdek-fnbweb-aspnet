@@ -1,91 +1,56 @@
-﻿# GONGDEK TEA & COFFEE MANAGEMENT SYSTEM
+﻿# GongDek Tea & Coffee
 
-## 1. Giới thiệu dự án
+Hệ thống quản lý quán trà sữa: POS, đặt hàng online, quản trị và báo cáo.
 
-Hệ thống quản lý cửa hàng trà sữa **GongDek Tea & Coffee**, hỗ trợ bán hàng tại quầy (POS), đặt hàng online, quản trị nội bộ và báo cáo doanh thu. Dự án gồm backend ASP.NET Core Web API và frontend React, phân quyền theo ba vai trò: **QuanLy**, **NhanVien**, **KhachHang**.
+**Địa chỉ:** 35 Biệt Thự, Nha Trang · **SĐT:** 0354717914 · **Email:** gongdek_nhom20@gmail.com
 
-## 2. Thông tin cửa hàng
+## Công nghệ
 
-| Mục | Nội dung |
-|-----|----------|
-| Tên | GONGDEK TEA & COFFEE |
-| Địa chỉ | 35 Biệt Thự, Nha Trang, Khánh Hòa |
-| SĐT | 0354717914 |
-| Email | gongdek_nhom20@gmail.com |
-| Giờ hoạt động | 08:00 – 22:00 |
+ASP.NET Core 8 · React + TypeScript + Vite · SQL Server · JWT · Sonner (toast)
 
-## 3. Công nghệ sử dụng
-
-| Thành phần | Công nghệ |
-|------------|-----------|
-| Backend | ASP.NET Core 8 Web API, Entity Framework Core |
-| Frontend | React 18, TypeScript, Vite, Tailwind CSS |
-| Database | Microsoft SQL Server |
-| Xác thực | JWT Bearer Token |
-| Export báo cáo | ClosedXML (Excel), QuestPDF (PDF) |
-| Quản lý mã nguồn | GitLab |
-
-## 4. Cấu trúc thư mục
+## Cấu trúc thư mục
 
 ```text
-GongDek_Nhom20/
-├── backend/                 # ASP.NET Core Web API
-│   ├── Controllers/         # REST API theo module
-│   ├── Services/            # Xử lý nghiệp vụ
-│   ├── Repositories/        # Truy vấn dữ liệu
-│   ├── Models/              # Entity EF Core
-│   ├── DTOs/                # Đối tượng trao đổi API
-│   ├── Helpers/             # JWT, hash mật khẩu, đường dẫn ảnh SP
-│   ├── Middlewares/         # Xử lý lỗi API thống nhất
-│   ├── Data/                # GongDekDbContext
-│   └── wwwroot/             # File tĩnh (ảnh sản phẩm upload)
-├── frontend/                # Ứng dụng React
-│   ├── public/images/       # Ảnh tĩnh (icon, background, products)
-│   └── src/
-│       ├── pages/           # Trang theo role (admin, employee, customer, public)
-│       ├── components/      # UI tái sử dụng
-│       ├── services/        # Gọi API
-│       ├── contexts/        # Auth, Cart, POS
-│       └── lib/             # Helper (productImage, authRedirect)
-├── database/
-│   ├── schema.sql           # Tạo CSDL + constraint/view/function/procedure
-│   └── seed.sql             # Dữ liệu mẫu (UTF-8)
-└── README.md
+backend/     API REST, JWT, upload ảnh (wwwroot/images/products)
+frontend/    Giao diện web (admin, POS, khách hàng)
+database/    schema.sql, seed.sql
+docs/        Báo cáo audit/cleanup (SecurityAuditReport, FinalCleanupReport)
 ```
 
-**Giải thích nhanh:**
+## Tính năng & đường dẫn
 
-- **backend/** — Toàn bộ logic server, API, bảo mật, export.
-- **frontend/** — Giao diện khách (trang chủ, giỏ hàng), admin, nhân viên POS.
-- **database/** — Script SQL tạo và seed database; không dùng `SeedData.cs`.
+| Vai trò | Đường dẫn | Chức năng |
+|---------|-----------|-----------|
+| **Quản lý** | `/admin/*` | Dashboard, sản phẩm, kho, nhà cung cấp, nhân viên, ca làm, hóa đơn, đơn online, báo cáo |
+| **Nhân viên** | `/employee/pos` | POS — bán tại quầy, thanh toán, tạo hóa đơn |
+| | `/employee/orders-online` | Xử lý đơn đặt online (xác nhận, pha chế, giao hàng) |
+| | `/employee/invoices` | Quản lý hóa đơn — tra cứu POS/online, chi tiết, xuất PDF |
+| | `/employee/shifts` | Ca làm việc (chấm công) |
+| **Khách hàng** | `/` | Menu, giỏ hàng, đặt online |
+| | `/customer/home` | Tài khoản, lịch sử đơn, trạng thái đơn hàng |
 
-## 5. Cách tạo database
+## Tạo database
 
-1. Mở **SQL Server Management Studio** (hoặc `sqlcmd`).
-2. Chạy `database/schema.sql` — tạo bảng, ràng buộc, view, function, stored procedure.
-3. Chạy `database/seed.sql` — dữ liệu nền (tài khoản, size, topping, ca mẫu).
-4. Chạy `powershell -File scripts/sync-product-images.ps1` — copy ảnh sản phẩm vào `public/images/products`.
-5. Chạy `database/seed_catalog_demo.sql` — 31 món, voucher, khách hàng, đơn POS/online mẫu (01/2026–nay).
+Tạo DB trống `GongDek`, chạy `schema.sql` rồi `seed.sql` (một lần trên DB mới).
 
-> **Lưu ý:** File SQL phải lưu **UTF-8** (không BOM) để tiếng Việt hiển thị đúng. Không seed bằng C#.
+```powershell
+cd database
+sqlcmd -S localhost -d GongDek -E -i schema.sql -f 65001
+sqlcmd -S localhost -d GongDek -E -i seed.sql -f 65001
+```
 
-Connection string cấu hình tại `backend/appsettings.json` → `ConnectionStrings:DefaultConnection`.
-
-## 6. Cách chạy backend
-
-**Cách 1 — Visual Studio:** Mở solution/project trong `backend/`, chọn profile `http`, F5.
-
-**Cách 2 — CLI:**
+## Chạy backend
 
 ```powershell
 cd backend
-dotnet restore
-dotnet run --launch-profile http
+copy appsettings.example.json appsettings.Development.json
+# Chỉnh ConnectionStrings và Jwt:Key
+dotnet watch run --launch-profile http
 ```
 
-API mặc định: `http://localhost:5256` — Swagger: `http://localhost:5256/swagger`.
+API: http://localhost:5256 · Swagger: http://localhost:5256/swagger
 
-## 7. Cách chạy frontend
+## Chạy frontend
 
 ```powershell
 cd frontend
@@ -94,134 +59,52 @@ npm install
 npm run dev
 ```
 
-Ứng dụng: `http://localhost:5173` — biến `VITE_API_BASE_URL` trỏ tới `http://localhost:5256/api`.
+Web: http://localhost:5173 (proxy `/api` và `/images/products` → backend)
 
-## 8. Tài khoản đăng nhập mẫu
+## Tài khoản mẫu
 
-| Vai trò | Tài khoản | Mật khẩu |
+| Vai trò | Đăng nhập | Mật khẩu |
 |---------|-----------|----------|
 | Quản lý | `admin` | `Admin@123` |
 | Nhân viên | `nhanvien` | `Nhanvien@123` |
 | Khách hàng | `khachhang@gongdek.vn` | `Khachhang@123` |
 
-Mật khẩu trong database được lưu dạng **hash** (không plain text).
+## Module theo thành viên
 
-## 9. Mô hình role
+| Thành viên | Phụ trách |
+|------------|-----------|
+| **Trần Anh Tín** | Auth JWT, nhân viên, ca làm, dashboard, báo cáo Excel/PDF |
+| **Trần Quốc Tiên** | Danh mục, sản phẩm, size/topping, kho, nhà cung cấp, phiếu nhập |
+| **Nguyễn Hoài Phương** | POS, đơn online, voucher, khách hàng, đánh giá, quản lý hóa đơn nhân viên, xuất PDF |
 
-Hệ thống chỉ có **3 role**:
+## Báo cáo kỹ thuật (`docs/`)
 
-| Role | Mô tả |
-|------|--------|
-| **QuanLy** | Quản trị toàn hệ thống: nhân viên, ca, báo cáo, dashboard |
-| **NhanVien** | Vận hành tại quầy: POS, xử lý đơn online (bán hàng, pha chế, thu ngân) |
-| **KhachHang** | Khách đặt hàng online, xem tài khoản |
+- `SecurityAuditReport.md` — rà soát bảo mật, tách secret khỏi repo
+- `FinalCleanupReport.md` — chuẩn hóa UI confirm/toast, dọn code, build check
 
-Nhân viên **không** tách role ThuNgan/Barista — một tài khoản `NhanVien` dùng chung cho bán hàng, pha chế và xử lý đơn tại quầy.
+## GitLab workflow
 
-## 10. Module đã hoàn thành
+Repository: https://gitlab.com/moanki-studycode-group/GongDek
 
-### Trần Anh Tín (đã triển khai)
+1. `git pull origin main` trước khi làm việc
+2. Tạo branch: `feature/<ten-thanh-vien>-<noi-dung>`
+3. Commit rõ ràng, push và merge request vào `main`
+4. Không commit secret — xem mục bảo mật bên dưới
 
-- Xác thực JWT: đăng nhập, đăng ký khách, phân quyền 3 role
-- Quản lý nhân viên: CRUD, khóa/mở khóa tài khoản
-- Quản lý ca làm việc: mở ca, đóng ca, lịch sử ca
-- Dashboard quản trị: doanh thu, đơn hôm nay, top sản phẩm, cảnh báo nguyên liệu
-- Báo cáo doanh thu + export Excel/PDF
-- Cấu trúc backend/frontend nền, middleware, exception handling
-- SQL nền: constraint, `ufn_TongDoanhThuTheoNgay`, `vw_TopSanPham`, `sp_BaoCaoDoanhThu`
-- API read-only catalog & hóa đơn (nền cho frontend hiển thị dữ liệu thật)
-- Đặt hàng online cơ bản: `POST /api/don-hang-online` (khách đăng nhập)
-- Frontend: trang chủ, giỏ hàng, auth, admin dashboard/nhân viên/ca/báo cáo, layout role
+## Security Configuration
 
-### Trần Quốc Tiên (đã hoàn thành — đã merge `main`)
+- Chỉ commit file mẫu: `backend/appsettings.example.json`, `frontend/.env.example`
+- File local (gitignore): `backend/appsettings.Development.json`, `frontend/.env`
+- Production: dùng biến môi trường `ConnectionStrings__DefaultConnection`, `Jwt__Key`
+- Frontend chỉ chứa `VITE_API_BASE_URL` — không embed JWT/DB password
 
-- CRUD danh mục, sản phẩm, size, topping
-- Upload ảnh: `POST /api/san-pham/{id}/upload-anh`
-- Nguyên liệu, nhà cung cấp, phiếu nhập kho (lập / duyệt / cập nhật tồn)
-- Tìm kiếm sản phẩm: `GET /api/san-pham?search=`
-- Frontend admin: Products, Categories, Inventory, StockIn, Size/Topping
-- Seed mẫu kho trong `database/seed.sql`
-
-### Nguyễn Hoài Phương (đã hoàn thành)
-
-- POS tại quầy: `POST /api/don-hang-online/pos-checkout` (yêu cầu mở ca)
-- Workflow đơn online: cập nhật trạng thái, hủy đơn + phiếu hoàn
-- Voucher CRUD, khách hàng CRUD, đánh giá sản phẩm
-- Xuất PDF hóa đơn: `GET /api/hoa-don/{id}/pdf`
-- Seed mẫu: `database/seed_catalog_demo.sql` (31 món, khách hàng, đơn 01–05/2026)
-
-## 11. API chính
-
-### Auth (AllowAnonymous / Authorize)
-
-| Method | Endpoint | Mô tả |
-|--------|----------|--------|
-| POST | `/api/auth/login` | Đăng nhập |
-| POST | `/api/auth/register-customer` | Đăng ký khách |
-| GET | `/api/auth/me` | Thông tin phiên |
-| POST | `/api/auth/logout` | Đăng xuất |
-
-### Quản lý (QuanLy)
-
-| Method | Endpoint | Mô tả |
-|--------|----------|--------|
-| GET/POST/PUT | `/api/nhan-vien/*` | Nhân viên |
-| PUT | `/api/nhan-vien/{id}/khoa` | Khóa tài khoản |
-| GET | `/api/khung-ca` | Khung ca |
-| GET/POST/PUT | `/api/ca-lam-viec/*` | Ca làm việc |
-| GET | `/api/dashboard/*` | Dashboard |
-| GET | `/api/bao-cao/doanh-thu/excel` | Export Excel |
-| GET | `/api/bao-cao/doanh-thu/pdf` | Export PDF |
-
-### Catalog & kho
-
-| Method | Endpoint | Mô tả |
-|--------|----------|--------|
-| GET/POST/PUT/DELETE | `/api/danh-muc` | Danh mục (write: QuanLy) |
-| GET/POST/PUT/DELETE | `/api/san-pham` | Sản phẩm + `?search=` |
-| POST | `/api/san-pham/{id}/upload-anh` | Upload ảnh (QuanLy) |
-| GET/POST/PUT/DELETE | `/api/size`, `/api/topping` | Size, topping |
-| GET/POST/PUT/DELETE | `/api/nguyen-lieu` | Nguyên liệu |
-| GET/POST/PUT/DELETE | `/api/nha-cung-cap` | Nhà cung cấp |
-| GET/POST/PUT/DELETE | `/api/phieu-nhap-kho` | Phiếu nhập |
-| PUT | `/api/phieu-nhap-kho/{id}/duyet` | Duyệt phiếu, cộng tồn |
-
-### Hóa đơn & đơn online
-
-| Method | Endpoint | Quyền | Mô tả |
-|--------|----------|-------|--------|
-| GET | `/api/hoa-don` | NoiBo | Danh sách hóa đơn |
-| GET | `/api/hoa-don/{id}` | NoiBo | Chi tiết |
-| GET | `/api/hoa-don/{id}/pdf` | NoiBo | Xuất PDF hóa đơn |
-| GET | `/api/don-hang-online` | NoiBo | Danh sách đơn online |
-| GET | `/api/don-hang-online/{id}` | NoiBo | Chi tiết |
-| POST | `/api/don-hang-online` | KhachHang | Khách đặt hàng online |
-| POST | `/api/don-hang-online/pos-checkout` | NoiBo | POS thanh toán tại quầy |
-| PUT | `/api/don-hang-online/{id}/update-status` | NoiBo | Cập nhật trạng thái đơn |
-| POST | `/api/don-hang-online/{id}/cancel` | NoiBo | Hủy đơn + phiếu hoàn |
-| GET/POST/PUT/DELETE | `/api/khach-hang` | NoiBo | Khách hàng CRUD |
-| GET | `/api/khach-hang/phone/{phone}` | NoiBo | Tra cứu SĐT (POS) |
-| GET/POST/PUT/DELETE | `/api/voucher` | NoiBo/QuanLy | Voucher |
-| GET | `/api/voucher/code/{code}` | NoiBo | Tra mã voucher |
-| GET/POST | `/api/danh-gia` | Anon/KhachHang | Đánh giá sản phẩm |
-
-## 12. GitLab workflow
-
-1. **Không** code trực tiếp trên nhánh `main`.
-2. Tạo branch riêng theo module, ví dụ: `feature/tin-auth`, `feature/quoctien-product`, `feature/hoaiphuong-pos`.
-3. **Pull/rebase `main`** trước khi bắt đầu hoặc trước khi merge.
-4. Commit message rõ nội dung thay đổi.
-5. Push branch và tạo **Merge Request** trên GitLab.
-6. Chỉ merge khi build backend + frontend pass.
-7. Xử lý conflict cẩn thận — **không overwrite** code người khác nếu chưa hiểu thay đổi.
-
-## 13. Kiểm tra build
+## Build
 
 ```powershell
-cd backend
-dotnet build
-
-cd ..\frontend
-npm run build
+cd backend; dotnet build
+cd ../frontend; npm run build
 ```
 
+## Dữ liệu mẫu (seed.sql)
+
+5 danh mục · 31 sản phẩm · 175 đơn · voucher · đánh giá · phiếu nhập kho (T1/2026–nay)

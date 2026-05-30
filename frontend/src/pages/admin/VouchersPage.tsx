@@ -30,9 +30,12 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Plus, Edit, Trash2, Ticket } from 'lucide-react';
 import { getVouchers, createVoucher, updateVoucher, deleteVoucher } from '@/services/voucherService';
 import type { Voucher } from '@/types';
+import { deleteConfirmOptions, useConfirm } from '@/components/common/ConfirmDialog';
+import { notifyError, notifySuccess, toastMessages } from '@/components/common/ToastMessage';
 import { toast } from 'sonner';
 
 export function VouchersPage() {
+  const { confirm } = useConfirm();
   const [vouchers, setVouchers] = useState<Voucher[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingVoucher, setEditingVoucher] = useState<Voucher | null>(null);
@@ -121,13 +124,14 @@ export function VouchersPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Bạn có chắc muốn xóa voucher này?')) return;
+    const ok = await confirm(deleteConfirmOptions('voucher'));
+    if (!ok) return;
     try {
       await deleteVoucher(id);
       setVouchers(await getVouchers());
-      toast.success('Xóa voucher thành công!');
+      notifySuccess(toastMessages.deleteSuccess);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Xóa voucher thất bại');
+      notifyError(err, 'Xóa voucher thất bại');
     }
   };
 

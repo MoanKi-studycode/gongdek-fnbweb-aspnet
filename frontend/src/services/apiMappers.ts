@@ -39,6 +39,7 @@ export interface HoaDonListApi {
   maHoaDon: number;
   loaiDon: string;
   trangThaiHoaDon: string;
+  trangThaiOnline?: string | null;
   tenKhachHang?: string | null;
   soDienThoaiKhach?: string | null;
   tenNhanVienLap: string;
@@ -163,6 +164,7 @@ export function mapHoaDonDetailToInvoice(dto: HoaDonDetailApi): Invoice {
 }
 
 export function mapHoaDonListToInvoice(dto: HoaDonListApi): Invoice {
+  const loaiDon = dto.loaiDon === 'Online' ? 'Online' : 'TaiQuay';
   return {
     id: String(dto.maHoaDon),
     invoiceCode: String(dto.maHoaDon).padStart(4, '0'),
@@ -175,6 +177,9 @@ export function mapHoaDonListToInvoice(dto: HoaDonListApi): Invoice {
     total: dto.tongThanhToan,
     paymentMethod: mapPaymentMethod(dto.phuongThucThanhToan),
     createdAt: dto.thoiGianLap,
+    loaiDon,
+    orderStatus: dto.trangThaiOnline ? mapOnlineStatus(dto.trangThaiOnline) : undefined,
+    invoiceStatus: dto.trangThaiHoaDon,
   };
 }
 

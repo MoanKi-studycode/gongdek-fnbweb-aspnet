@@ -35,9 +35,9 @@ public class CaLamViecService : ICaLamViecService
         return items.Select(MapToDto).ToList();
     }
 
-    public async Task<List<CaLamViecDto>> GetDangMoAsync()
+    public async Task<List<CaLamViecDto>> GetDangMoAsync(int? maNV = null)
     {
-        var items = await _caRepository.GetDangMoAsync();
+        var items = await _caRepository.GetDangMoAsync(maNV);
         return items.Select(MapToDto).ToList();
     }
 

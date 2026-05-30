@@ -18,8 +18,10 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Card, CardContent } from '@/components/ui/card';
-import { Search, Eye, Award } from 'lucide-react';
-import { getCustomers } from '@/services/customerService';
+import { Search, Eye, Award, Plus } from 'lucide-react';
+import { toast } from 'sonner';
+import { getCustomers, createCustomer } from '@/services/customerService';
+import { Label } from '@/components/ui/label';
 import type { Customer } from '@/types';
 
 export function CustomersPage() {
@@ -27,10 +29,35 @@ export function CustomersPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [createForm, setCreateForm] = useState({ hoTen: '', soDienThoai: '', email: '' });
+
+  const loadCustomers = () => getCustomers().then(setCustomers);
 
   useEffect(() => {
-    getCustomers().then(setCustomers);
+    loadCustomers();
   }, []);
+
+  const handleCreateCustomer = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setCreating(true);
+    try {
+      await createCustomer({
+        hoTen: createForm.hoTen.trim(),
+        soDienThoai: createForm.soDienThoai.trim(),
+        email: createForm.email.trim() || undefined,
+      });
+      toast.success('Đã thêm khách hàng mới');
+      setIsCreateOpen(false);
+      setCreateForm({ hoTen: '', soDienThoai: '', email: '' });
+      await loadCustomers();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Không thể tạo khách hàng.');
+    } finally {
+      setCreating(false);
+    }
+  };
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('vi-VN', {
@@ -74,6 +101,13 @@ export function CustomersPage() {
               <p className="text-sm text-gray-600">Tổng khách hàng</p>
               <p className="text-2xl font-bold text-[#8B7355]">{customers.length}</p>
             </div>
+            <Button
+              className="bg-[#8B7355] hover:bg-[#6F5B44]"
+              onClick={() => setIsCreateOpen(true)}
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Thêm khách hàng
+            </Button>
           </div>
         </div>
 
@@ -151,6 +185,51 @@ export function CustomersPage() {
             )}
           </CardContent>
         </Card>
+
+        <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Thêm khách hàng</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleCreateCustomer} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="khHoTen">Họ tên *</Label>
+                <Input
+                  id="khHoTen"
+                  value={createForm.hoTen}
+                  onChange={(e) => setCreateForm({ ...createForm, hoTen: e.target.value })}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="khSdt">Số điện thoại *</Label>
+                <Input
+                  id="khSdt"
+                  value={createForm.soDienThoai}
+                  onChange={(e) => setCreateForm({ ...createForm, soDienThoai: e.target.value })}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="khEmail">Email</Label>
+                <Input
+                  id="khEmail"
+                  type="email"
+                  value={createForm.email}
+                  onChange={(e) => setCreateForm({ ...createForm, email: e.target.value })}
+                />
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button type="button" variant="outline" onClick={() => setIsCreateOpen(false)}>
+                  Hủy
+                </Button>
+                <Button type="submit" className="bg-[#8B7355] hover:bg-[#6F5B44]" disabled={creating}>
+                  {creating ? 'Đang lưu...' : 'Tạo mới'}
+                </Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
 
         {/* Customer Detail Modal */}
         <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>

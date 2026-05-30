@@ -13,8 +13,15 @@ var builder = WebApplication.CreateBuilder(args);
 
 #region Cấu hình cơ sở dữ liệu
 
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+if (string.IsNullOrWhiteSpace(connectionString))
+{
+    throw new InvalidOperationException(
+        "Thiếu ConnectionStrings:DefaultConnection. Sao chép appsettings.example.json sang appsettings.Development.json và cấu hình.");
+}
+
 builder.Services.AddDbContext<GongDekDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseSqlServer(connectionString));
 
 #endregion
 
@@ -50,7 +57,14 @@ builder.Services.AddScoped<IVoucherService, VoucherService>();
 builder.Services.AddScoped<IDanhGiaService, DanhGiaService>();
 
 var jwtSettings = builder.Configuration.GetSection("Jwt").Get<JwtSettings>()
-    ?? throw new InvalidOperationException("Thiếu cấu hình Jwt trong appsettings.json");
+    ?? throw new InvalidOperationException("Thiếu cấu hình Jwt trong appsettings.");
+
+if (string.IsNullOrWhiteSpace(jwtSettings.Key)
+    || jwtSettings.Key.StartsWith("YOUR_", StringComparison.OrdinalIgnoreCase))
+{
+    throw new InvalidOperationException(
+        "Thiếu Jwt:Key hợp lệ. Cấu hình trong appsettings.Development.json hoặc biến môi trường Jwt__Key.");
+}
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -104,7 +118,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+if (!app.Environment.IsDevelopment())
+    app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseCors("Frontend");
 app.UseAuthentication();

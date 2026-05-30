@@ -42,11 +42,13 @@ import {
 } from '@/services/onlineOrderService';
 import { BrandLogo } from '@/components/common/BrandLogo';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
+import { logoutConfirmOptions, useConfirm } from '@/components/common/ConfirmDialog';
 import { toast } from 'sonner';
 
 export function POSOrdersOnlinePage() {
   const navigate = useNavigate();
   const { user, isAuthenticated, logout } = useAuth();
+  const { confirm } = useConfirm();
   const [orders, setOrders] = useState<OnlineOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -135,6 +137,8 @@ export function POSOrdersOnlinePage() {
   };
 
   const handleLogout = async () => {
+    const ok = await confirm(logoutConfirmOptions());
+    if (!ok) return;
     await logout();
     navigate('/auth/login');
   };
@@ -162,10 +166,22 @@ export function POSOrdersOnlinePage() {
               </p>
             </div>
           </div>
-          <Button variant="outline" onClick={handleLogout}>
-            <LogOut className="w-4 h-4 mr-2" />
-            Đăng xuất
-          </Button>
+          <div className="flex items-center gap-2">
+            <Link to="/employee/invoices">
+              <Button variant="outline" size="sm">
+                Hóa đơn
+              </Button>
+            </Link>
+            <Link to="/employee/shifts">
+              <Button variant="outline" size="sm">
+                Ca làm
+              </Button>
+            </Link>
+            <Button variant="outline" onClick={handleLogout}>
+              <LogOut className="w-4 h-4 mr-2" />
+              Đăng xuất
+            </Button>
+          </div>
         </div>
       </header>
 

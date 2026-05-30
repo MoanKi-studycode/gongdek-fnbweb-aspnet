@@ -11,6 +11,7 @@ import { ProductsPage } from '@/pages/admin/ProductsPage';
 import { CategoriesPage } from '@/pages/admin/CategoriesPage';
 import { SizeToppingPage } from '@/pages/admin/SizeToppingPage';
 import { InventoryPage } from '@/pages/admin/InventoryPage';
+import { SuppliersPage } from '@/pages/admin/SuppliersPage';
 import { StockInPage } from '@/pages/admin/StockInPage';
 import { EmployeesPage } from '@/pages/admin/EmployeesPage';
 import { ShiftsPage } from '@/pages/admin/ShiftsPage';
@@ -22,6 +23,7 @@ import { ReportsPage } from '@/pages/admin/ReportsPage';
 
 import { POSPage } from '@/pages/cashier/POSPage';
 import { POSOrdersOnlinePage } from '@/pages/cashier/POSOrdersOnlinePage';
+import { EmployeeInvoicesPage } from '@/pages/cashier/EmployeeInvoicesPage';
 import { CustomerAccountPage } from '@/pages/customer/CustomerAccountPage';
 
 function AdminRoute({ children }: { children: React.ReactNode }) {
@@ -75,6 +77,22 @@ export const router = createBrowserRouter([
       </EmployeeRoute>
     ),
   },
+  {
+    path: '/employee/shifts',
+    element: (
+      <EmployeeRoute>
+        <ShiftsPage employeeMode />
+      </EmployeeRoute>
+    ),
+  },
+  {
+    path: '/employee/invoices',
+    element: (
+      <EmployeeRoute>
+        <EmployeeInvoicesPage />
+      </EmployeeRoute>
+    ),
+  },
 
   {
     path: '/customer/home',
@@ -109,6 +127,7 @@ export const router = createBrowserRouter([
   { path: '/admin/categories', element: <AdminRoute><CategoriesPage /></AdminRoute> },
   { path: '/admin/size-topping', element: <AdminRoute><SizeToppingPage /></AdminRoute> },
   { path: '/admin/inventory', element: <AdminRoute><InventoryPage /></AdminRoute> },
+  { path: '/admin/suppliers', element: <AdminRoute><SuppliersPage /></AdminRoute> },
   { path: '/admin/stock-in', element: <AdminRoute><StockInPage /></AdminRoute> },
   { path: '/admin/employees', element: <AdminRoute><EmployeesPage /></AdminRoute> },
   { path: '/admin/shifts', element: <AdminRoute><ShiftsPage /></AdminRoute> },

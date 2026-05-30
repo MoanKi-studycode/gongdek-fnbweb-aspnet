@@ -36,6 +36,11 @@ export default defineConfig({
 
   server: {
     proxy: {
+      // API — tránh CORS khi VITE_API_BASE_URL=/api
+      '/api': {
+        target: 'http://localhost:5256',
+        changeOrigin: true,
+      },
       // Ảnh upload qua API (wwwroot) khi chưa có bản copy trong public/
       '/images/products': {
         target: 'http://localhost:5256',

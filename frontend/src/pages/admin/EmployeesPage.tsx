@@ -41,6 +41,8 @@ import {
   type Employee,
   type EmployeeRoleOption,
 } from '@/services/employeeService';
+import { lockEmployeeConfirmOptions, useConfirm } from '@/components/common/ConfirmDialog';
+import { notifyError, notifySuccess, toastMessages } from '@/components/common/ToastMessage';
 import { toast } from 'sonner';
 
 interface EmployeeFormData {
@@ -66,6 +68,7 @@ const emptyForm: EmployeeFormData = {
 };
 
 export function EmployeesPage() {
+  const { confirm } = useConfirm();
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [roles, setRoles] = useState<EmployeeRoleOption[]>([]);
   const [loading, setLoading] = useState(true);
@@ -185,23 +188,20 @@ export function EmployeesPage() {
 
   const handleToggleLock = async (employee: Employee) => {
     const isLocked = employee.trangThai === 'Khoa';
-    const confirmMsg = isLocked
-      ? `Mở khóa tài khoản "${employee.hoTen}"?`
-      : `Khóa tài khoản "${employee.hoTen}"?`;
-
-    if (!confirm(confirmMsg)) return;
+    const ok = await confirm(lockEmployeeConfirmOptions(employee.hoTen, isLocked));
+    if (!ok) return;
 
     try {
       if (isLocked) {
         await unlockEmployee(employee.maNV);
-        toast.success('Đã mở khóa tài khoản.');
+        notifySuccess(toastMessages.unlockSuccess);
       } else {
         await lockEmployee(employee.maNV);
-        toast.success('Đã khóa tài khoản.');
+        notifySuccess(toastMessages.lockSuccess);
       }
       await loadData();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Không thể thay đổi trạng thái.');
+      notifyError(err, 'Không thể thay đổi trạng thái.');
     }
   };
 

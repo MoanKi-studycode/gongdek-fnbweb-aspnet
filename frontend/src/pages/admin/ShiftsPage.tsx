@@ -1,5 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
+import { Link } from 'react-router';
 import { AdminLayout } from '@/components/layout/AdminLayout';
+import { BrandLogo } from '@/components/common/BrandLogo';
+import { useAuth } from '@/contexts/AuthContext';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -43,9 +46,17 @@ import {
   type CaLamViec,
 } from '@/services/shiftService';
 import { getEmployees, type Employee } from '@/services/employeeService';
-import { toast } from 'sonner';
+import { notifyError, notifySuccess, toastMessages } from '@/components/common/ToastMessage';
 
-export function ShiftsPage() {
+type ShiftsPageProps = {
+  employeeMode?: boolean;
+};
+
+export function ShiftsPage({ employeeMode = false }: ShiftsPageProps) {
+  const { user, hasRole } = useAuth();
+  const staffOnly = employeeMode || (user != null && !hasRole('QuanLy'));
+  const staffId = user ? Number(user.id) : undefined;
+
   const [khungCas, setKhungCas] = useState<KhungCa[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [history, setHistory] = useState<CaLamViec[]>([]);
@@ -96,14 +107,19 @@ export function ShiftsPage() {
     setLoading(true);
     setError('');
     try {
-      const [khungCaList, employeeList, openList, historyList] = await Promise.all([
+      const historyMaNv = staffOnly
+        ? staffId
+        : filterMaNV !== 'all'
+          ? Number(filterMaNV)
+          : undefined;
+
+      const [khungCaList, openList, historyList] = await Promise.all([
         getKhungCaList(),
-        getEmployees({ maVaiTro: undefined }),
         getCaDangMo(),
         getCaLamViecList({
           tuNgay: filterTuNgay || undefined,
           denNgay: filterDenNgay || undefined,
-          maNV: filterMaNV !== 'all' ? Number(filterMaNV) : undefined,
+          maNV: historyMaNv,
           maKhungCa: filterMaKhungCa !== 'all' ? Number(filterMaKhungCa) : undefined,
           trangThaiCa:
             filterTrangThai !== 'all'
@@ -112,8 +128,15 @@ export function ShiftsPage() {
         }),
       ]);
 
+      let employeeList: Employee[] = [];
+      if (!staffOnly) {
+        employeeList = (await getEmployees({ maVaiTro: undefined })).filter(
+          (e) => e.trangThai === 'HoatDong',
+        );
+      }
+
       setKhungCas(khungCaList);
-      setEmployees(employeeList.filter((e) => e.trangThai === 'HoatDong'));
+      setEmployees(employeeList);
       setOpenShifts(openList);
       setHistory(historyList);
     } catch (err) {
@@ -121,7 +144,7 @@ export function ShiftsPage() {
     } finally {
       setLoading(false);
     }
-  }, [filterTuNgay, filterDenNgay, filterMaNV, filterMaKhungCa, filterTrangThai]);
+  }, [filterTuNgay, filterDenNgay, filterMaNV, filterMaKhungCa, filterTrangThai, staffOnly, staffId]);
 
   useEffect(() => {
     const timer = setTimeout(loadData, 300);
@@ -131,7 +154,7 @@ export function ShiftsPage() {
   const handleOpenMoCa = () => {
     setMoCaForm({
       maKhungCa: khungCas[0] ? String(khungCas[0].maKhungCa) : '',
-      maNV: employees[0] ? String(employees[0].maNV) : '',
+      maNV: staffOnly && staffId ? String(staffId) : employees[0] ? String(employees[0].maNV) : '',
       tienQuyDauCa: '0',
       ghiChu: '',
     });
@@ -144,15 +167,15 @@ export function ShiftsPage() {
     try {
       await moCa({
         maKhungCa: Number(moCaForm.maKhungCa),
-        maNV: Number(moCaForm.maNV),
+        maNV: staffOnly && staffId ? staffId : Number(moCaForm.maNV),
         tienQuyDauCa: Number(moCaForm.tienQuyDauCa),
         ghiChu: moCaForm.ghiChu || undefined,
       });
-      toast.success('Mở ca thành công!');
+      notifySuccess(toastMessages.openShiftSuccess);
       setIsMoCaOpen(false);
       await loadData();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Không thể mở ca.');
+      notifyError(err, 'Không thể mở ca.');
     } finally {
       setSubmitting(false);
     }
@@ -174,12 +197,12 @@ export function ShiftsPage() {
         tienMatThucTe: Number(dongCaForm.tienMatThucTe),
         ghiChu: dongCaForm.ghiChu || undefined,
       });
-      toast.success('Đóng ca thành công!');
+      notifySuccess(toastMessages.closeShiftSuccess);
       setIsDongCaOpen(false);
       setSelectedShift(null);
       await loadData();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Không thể đóng ca.');
+      notifyError(err, 'Không thể đóng ca.');
     } finally {
       setSubmitting(false);
     }
@@ -245,13 +268,16 @@ export function ShiftsPage() {
     </Table>
   );
 
-  return (
-    <AdminLayout>
-      <div className="p-8">
+  const pageContent = (
+      <div className={staffOnly ? 'max-w-6xl mx-auto px-4 py-8' : 'p-8'}>
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Quản lý ca làm việc</h1>
-            <p className="text-gray-600 mt-1">Mở ca, đóng ca và xem lịch sử làm việc</p>
+            <h1 className="text-3xl font-bold text-gray-900">
+              {staffOnly ? 'Ca làm việc của tôi' : 'Quản lý ca làm việc'}
+            </h1>
+            <p className="text-gray-600 mt-1">
+              {staffOnly ? 'Mở ca trước khi bán hàng tại quầy (POS)' : 'Mở ca, đóng ca và xem lịch sử làm việc'}
+            </p>
           </div>
           <div className="flex items-center gap-4">
             <Card>
@@ -268,7 +294,7 @@ export function ShiftsPage() {
             <Button
               onClick={handleOpenMoCa}
               className="bg-[#8B7355] hover:bg-[#6F5B44]"
-              disabled={khungCas.length === 0 || employees.length === 0}
+              disabled={khungCas.length === 0 || (!staffOnly && employees.length === 0)}
             >
               <Plus className="w-4 h-4 mr-2" />
               Mở ca
@@ -340,22 +366,24 @@ export function ShiftsPage() {
                       <Label>Đến ngày</Label>
                       <Input type="date" value={filterDenNgay} onChange={(e) => setFilterDenNgay(e.target.value)} />
                     </div>
-                    <div className="space-y-1">
-                      <Label>Nhân viên</Label>
-                      <Select value={filterMaNV} onValueChange={setFilterMaNV}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Tất cả" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">Tất cả</SelectItem>
-                          {employees.map((emp) => (
-                            <SelectItem key={emp.maNV} value={String(emp.maNV)}>
-                              {emp.hoTen}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
+                    {!staffOnly && (
+                      <div className="space-y-1">
+                        <Label>Nhân viên</Label>
+                        <Select value={filterMaNV} onValueChange={setFilterMaNV}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Tất cả" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">Tất cả</SelectItem>
+                            {employees.map((emp) => (
+                              <SelectItem key={emp.maNV} value={String(emp.maNV)}>
+                                {emp.hoTen}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
                     <div className="space-y-1">
                       <Label>Khung ca</Label>
                       <Select value={filterMaKhungCa} onValueChange={setFilterMaKhungCa}>
@@ -410,7 +438,11 @@ export function ShiftsPage() {
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Mở ca làm việc</DialogTitle>
-              <DialogDescription>Chọn nhân viên, khung ca và nhập tiền quỹ đầu ca</DialogDescription>
+              <DialogDescription>
+                {staffOnly
+                  ? 'Chọn khung ca và nhập tiền quỹ đầu ca'
+                  : 'Chọn nhân viên, khung ca và nhập tiền quỹ đầu ca'}
+              </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleSubmitMoCa} className="space-y-4">
               <div className="space-y-2">
@@ -431,24 +463,26 @@ export function ShiftsPage() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-2">
-                <Label>Nhân viên *</Label>
-                <Select
-                  value={moCaForm.maNV}
-                  onValueChange={(v) => setMoCaForm({ ...moCaForm, maNV: v })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Chọn nhân viên" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {employees.map((emp) => (
-                      <SelectItem key={emp.maNV} value={String(emp.maNV)}>
-                        {emp.hoTen} ({emp.tenDangNhap})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              {!staffOnly && (
+                <div className="space-y-2">
+                  <Label>Nhân viên *</Label>
+                  <Select
+                    value={moCaForm.maNV}
+                    onValueChange={(v) => setMoCaForm({ ...moCaForm, maNV: v })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Chọn nhân viên" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {employees.map((emp) => (
+                        <SelectItem key={emp.maNV} value={String(emp.maNV)}>
+                          {emp.hoTen} ({emp.tenDangNhap})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
               <div className="space-y-2">
                 <Label htmlFor="tienQuyDauCa">Tiền quỹ đầu ca (VNĐ) *</Label>
                 <Input
@@ -525,6 +559,31 @@ export function ShiftsPage() {
           </DialogContent>
         </Dialog>
       </div>
-    </AdminLayout>
   );
+
+  if (staffOnly) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <header className="bg-white border-b shadow-sm">
+          <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+            <Link to="/employee/pos" className="flex items-center gap-2">
+              <BrandLogo size="sm" />
+              <span className="font-semibold text-gray-900">GongDek POS</span>
+            </Link>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" asChild>
+                <Link to="/employee/pos">Quầy bán</Link>
+              </Button>
+              <Button variant="outline" size="sm" asChild>
+                <Link to="/employee/orders-online">Đơn online</Link>
+              </Button>
+            </div>
+          </div>
+        </header>
+        {pageContent}
+      </div>
+    );
+  }
+
+  return <AdminLayout>{pageContent}</AdminLayout>;
 }

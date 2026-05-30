@@ -49,6 +49,13 @@ public class KhachHangService : IKhachHangService
         return kh == null ? null : await MapWithSpentAsync(kh);
     }
 
+    public async Task<KhachHangDto> GetProfileAsync(int maKh)
+    {
+        var kh = await _context.KhachHangs.FindAsync(maKh)
+            ?? throw new KeyNotFoundException($"Không tìm thấy khách hàng #{maKh}.");
+        return await MapWithSpentAsync(kh);
+    }
+
     public async Task<KhachHangDto> CreateAsync(CreateKhachHangDto dto)
     {
         var phone = dto.SoDienThoai.Trim();

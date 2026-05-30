@@ -8,7 +8,7 @@ namespace GongDek_Nhom20.Controllers;
 /// <summary>API khung ca làm việc — phụ trách: Trần Anh Tín.</summary>
 [ApiController]
 [Route("api/khung-ca")]
-[Authorize(Policy = "QuanLy")]
+[Authorize(Policy = "NoiBo")]
 public class KhungCaController : ControllerBase
 {
     private readonly IKhungCaService _khungCaService;

@@ -12,17 +12,37 @@ function getAuthToken(): string | null {
 }
 
 async function parseErrorMessage(response: Response): Promise<string> {
+  if (response.status === 401) {
+    return 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.';
+  }
+  if (response.status === 403) {
+    return 'Bạn không có quyền thực hiện thao tác này.';
+  }
+
   const contentType = response.headers.get('content-type') ?? '';
   if (contentType.includes('application/json')) {
     const text = await response.text().catch(() => response.statusText);
     try {
-      const json = JSON.parse(text) as { message?: string };
-      return json.message ?? text;
+      const json = JSON.parse(text) as { message?: string; title?: string };
+      const msg = json.message ?? json.title ?? text;
+      if (msg && msg.trim()) return msg;
     } catch {
-      return text || `HTTP ${response.status}`;
+      if (text?.trim()) return text;
     }
   }
-  return `HTTP ${response.status}`;
+
+  if (response.status >= 500) {
+    return 'Có lỗi xảy ra trong quá trình xử lý.';
+  }
+
+  return 'Không thể hoàn thành yêu cầu. Vui lòng thử lại.';
+}
+
+function wrapNetworkError(err: unknown): Error {
+  if (err instanceof TypeError) {
+    return new Error('Không thể kết nối máy chủ. Vui lòng kiểm tra backend và thử lại.');
+  }
+  return err instanceof Error ? err : new Error('Có lỗi xảy ra trong quá trình xử lý.');
 }
 
 async function request<T>(method: HttpMethod, path: string, options: RequestOptions = {}): Promise<T> {
@@ -36,11 +56,16 @@ async function request<T>(method: HttpMethod, path: string, options: RequestOpti
     headers.Authorization = `Bearer ${token}`;
   }
 
-  const response = await fetch(`${BASE_URL}${path}`, {
-    method,
-    headers,
-    body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${BASE_URL}${path}`, {
+      method,
+      headers,
+      body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
+    });
+  } catch (err) {
+    throw wrapNetworkError(err);
+  }
 
   if (!response.ok) {
     throw new Error(await parseErrorMessage(response));
@@ -61,11 +86,16 @@ export async function postForm<T>(path: string, formData: FormData): Promise<T> 
     headers.Authorization = `Bearer ${token}`;
   }
 
-  const response = await fetch(`${BASE_URL}${path}`, {
-    method: 'POST',
-    headers,
-    body: formData,
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${BASE_URL}${path}`, {
+      method: 'POST',
+      headers,
+      body: formData,
+    });
+  } catch (err) {
+    throw wrapNetworkError(err);
+  }
 
   if (!response.ok) {
     throw new Error(await parseErrorMessage(response));
@@ -87,7 +117,12 @@ export async function downloadFile(path: string, fallbackFilename: string): Prom
   const headers: Record<string, string> = {};
   if (token) headers.Authorization = `Bearer ${token}`;
 
-  const response = await fetch(`${BASE_URL}${path}`, { headers });
+  let response: Response;
+  try {
+    response = await fetch(`${BASE_URL}${path}`, { headers });
+  } catch (err) {
+    throw wrapNetworkError(err);
+  }
   if (!response.ok) throw new Error(await parseErrorMessage(response));
 
   const disposition = response.headers.get('content-disposition');

@@ -12,7 +12,7 @@ public interface ICaLamViecService
         int? maKhungCa,
         string? trangThaiCa);
 
-    Task<List<CaLamViecDto>> GetDangMoAsync();
+    Task<List<CaLamViecDto>> GetDangMoAsync(int? maNV = null);
     Task<CaLamViecDto> GetByIdAsync(int maCa);
     Task<CaLamViecDto> MoCaAsync(MoCaDto dto);
     Task<CaLamViecDto> DongCaAsync(int maCa, DongCaDto dto);

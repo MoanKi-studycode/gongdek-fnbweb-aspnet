@@ -55,6 +55,43 @@ public class GongDekDbContext : DbContext
         ConfigurePhieuNhapKho(modelBuilder);
         ConfigureChiTietPhieuNhap(modelBuilder);
         ConfigureDanhGia(modelBuilder);
+        ConfigureMoneyDecimals(modelBuilder);
+    }
+
+    private static void ConfigureMoneyDecimals(ModelBuilder modelBuilder)
+    {
+        const int precision = 18;
+        const int scale = 2;
+
+        modelBuilder.Entity<SanPham>().Property(e => e.GiaBanGoc).HasPrecision(precision, scale);
+        modelBuilder.Entity<Size>().Property(e => e.PhuThu).HasPrecision(precision, scale);
+        modelBuilder.Entity<Topping>().Property(e => e.DonGia).HasPrecision(precision, scale);
+        modelBuilder.Entity<CaLamViec>().Property(e => e.TienQuyDauCa).HasPrecision(precision, scale);
+        modelBuilder.Entity<CaLamViec>().Property(e => e.TienMatThucTe).HasPrecision(precision, scale);
+        modelBuilder.Entity<Voucher>().Property(e => e.GiaTriGiam).HasPrecision(precision, scale);
+        modelBuilder.Entity<Voucher>().Property(e => e.DonHangToiThieu).HasPrecision(precision, scale);
+
+        var hoaDon = modelBuilder.Entity<HoaDon>();
+        hoaDon.Property(e => e.TongTienMon).HasPrecision(precision, scale);
+        hoaDon.Property(e => e.PhiGiaoHang).HasPrecision(precision, scale);
+        hoaDon.Property(e => e.TienGiamGia).HasPrecision(precision, scale);
+        hoaDon.Property(e => e.TongThanhToan).HasPrecision(precision, scale);
+        hoaDon.Property(e => e.TienKhachDua).HasPrecision(precision, scale);
+        hoaDon.Property(e => e.TienThua).HasPrecision(precision, scale);
+
+        var chiTiet = modelBuilder.Entity<ChiTietHoaDon>();
+        chiTiet.Property(e => e.DonGiaGoc).HasPrecision(precision, scale);
+        chiTiet.Property(e => e.PhuThuSize).HasPrecision(precision, scale);
+        chiTiet.Property(e => e.ThanhTien).HasPrecision(precision, scale);
+
+        modelBuilder.Entity<ChiTietHoaDonTopping>().Property(e => e.DonGiaTopping).HasPrecision(precision, scale);
+        modelBuilder.Entity<PhieuHoanHuy>().Property(e => e.SoTienHoan).HasPrecision(precision, scale);
+        modelBuilder.Entity<NguyenLieu>().Property(e => e.SoLuongTon).HasPrecision(precision, scale);
+        modelBuilder.Entity<NguyenLieu>().Property(e => e.SoLuongCanhBao).HasPrecision(precision, scale);
+        modelBuilder.Entity<PhieuNhapKho>().Property(e => e.TongTienNhap).HasPrecision(precision, scale);
+        modelBuilder.Entity<ChiTietPhieuNhap>().Property(e => e.SoLuongNhap).HasPrecision(precision, scale);
+        modelBuilder.Entity<ChiTietPhieuNhap>().Property(e => e.DonGiaNhap).HasPrecision(precision, scale);
+        modelBuilder.Entity<ChiTietPhieuNhap>().Property(e => e.ThanhTien).HasPrecision(precision, scale);
     }
 
     private static void ConfigureVaiTro(ModelBuilder modelBuilder)
@@ -103,7 +140,13 @@ public class GongDekDbContext : DbContext
         entity.Property(e => e.TrangThai).HasMaxLength(20).HasDefaultValue("HoatDong");
         entity.Property(e => e.NgayDangKy).HasDefaultValueSql("sysdatetime()");
 
-        entity.ToTable("KhachHang", t => t.HasCheckConstraint("CK_KhachHang_Diem", "[DiemTichLuy] >= 0"));
+        entity.ToTable("KhachHang", t =>
+        {
+            t.HasCheckConstraint("CK_KhachHang_Diem", "[DiemTichLuy] >= 0");
+            t.HasCheckConstraint("CK_KhachHang_Hang",
+                "[HangThanhVien] IN (N'ThanhVien', N'Bac', N'Vang', N'KimCuong')");
+            t.HasCheckConstraint("CK_KhachHang_TrangThai", "[TrangThai] IN (N'HoatDong', N'Khoa')");
+        });
     }
 
     private static void ConfigureDanhMuc(ModelBuilder modelBuilder)

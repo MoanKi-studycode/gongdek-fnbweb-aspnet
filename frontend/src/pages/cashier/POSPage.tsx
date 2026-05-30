@@ -16,7 +16,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
-import { Search, LogOut, Trash2, Edit, Plus, Minus, ShoppingBag, Package } from 'lucide-react';
+import { Search, LogOut, Trash2, Edit, Plus, Minus, ShoppingBag, Package, Receipt } from 'lucide-react';
+import { logoutConfirmOptions, useConfirm } from '@/components/common/ConfirmDialog';
 import { toast } from 'sonner';
 import { Link } from 'react-router';
 import { BrandLogo } from '@/components/common/BrandLogo';
@@ -27,6 +28,7 @@ const SIZE_SURCHARGE = 5000;
 export function POSPage() {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const { confirm } = useConfirm();
   const {
     orderItems,
     customer,
@@ -198,7 +200,12 @@ export function POSPage() {
       clearOrder();
       setCustomerPhone('');
       setVoucherCode('');
-      toast.success(`Thanh toán thành công! Mã hóa đơn #${result.maHoaDon}`);
+      toast.success(`Thanh toán thành công! Mã hóa đơn #${result.maHoaDon}`, {
+        action: {
+          label: 'Xem hóa đơn',
+          onClick: () => navigate('/employee/invoices'),
+        },
+      });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Thanh toán thất bại');
     } finally {
@@ -207,6 +214,8 @@ export function POSPage() {
   };
 
   const handleLogout = async () => {
+    const ok = await confirm(logoutConfirmOptions());
+    if (!ok) return;
     await logout();
     navigate('/auth/login');
   };
@@ -228,6 +237,17 @@ export function POSPage() {
             </div>
           </div>
           <div className="flex items-center gap-3">
+            <Link to="/employee/shifts">
+              <Button variant="outline" size="sm">
+                Ca làm việc
+              </Button>
+            </Link>
+            <Link to="/employee/invoices">
+              <Button variant="outline" size="sm">
+                <Receipt className="w-4 h-4 mr-2" />
+                Hóa đơn
+              </Button>
+            </Link>
             <Link to="/employee/orders-online">
               <Button variant="outline" className="border-[#8B7355] text-[#8B7355] hover:bg-[#8B7355] hover:text-white">
                 <Package className="w-4 h-4 mr-2" />

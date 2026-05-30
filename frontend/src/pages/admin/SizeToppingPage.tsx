@@ -42,6 +42,8 @@ import {
   updateTopping,
   type Topping,
 } from '@/services/toppingService';
+import { deleteConfirmOptions, useConfirm } from '@/components/common/ConfirmDialog';
+import { notifyError, notifySuccess, toastMessages } from '@/components/common/ToastMessage';
 import { toast } from 'sonner';
 
 const SIZE_STATUS_OPTIONS = [
@@ -67,6 +69,7 @@ type ToppingFormData = {
 };
 
 export function SizeToppingPage() {
+  const { confirm } = useConfirm();
   const [sizes, setSizes] = useState<Size[]>([]);
   const [toppings, setToppings] = useState<Topping[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -166,11 +169,12 @@ export function SizeToppingPage() {
   };
 
   const handleDeleteSize = async (size: Size) => {
-    if (!confirm(`Bạn có chắc muốn xóa size ${size.name}?`)) return;
+    const ok = await confirm(deleteConfirmOptions('size', `Bạn có chắc muốn xóa size "${size.name}"?`));
+    if (!ok) return;
 
     try {
       await deleteSize(size.maSize);
-      toast.success('Xóa size thành công!');
+      notifySuccess(toastMessages.deleteSuccess);
       await loadData();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Xóa size thất bại');
@@ -224,11 +228,12 @@ export function SizeToppingPage() {
   };
 
   const handleDeleteTopping = async (topping: Topping) => {
-    if (!confirm(`Bạn có chắc muốn xóa topping ${topping.name}?`)) return;
+    const ok = await confirm(deleteConfirmOptions('topping', `Bạn có chắc muốn xóa topping "${topping.name}"?`));
+    if (!ok) return;
 
     try {
       await deleteTopping(topping.maTopping);
-      toast.success('Xóa topping thành công!');
+      notifySuccess(toastMessages.deleteSuccess);
       await loadData();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Xóa topping thất bại');

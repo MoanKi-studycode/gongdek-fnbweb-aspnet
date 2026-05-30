@@ -49,12 +49,17 @@ public class CaLamViecRepository : ICaLamViecRepository
             .ToListAsync();
     }
 
-    public async Task<List<CaLamViec>> GetDangMoAsync()
+    public async Task<List<CaLamViec>> GetDangMoAsync(int? maNV = null)
     {
-        return await _context.CaLamViocs
+        var query = _context.CaLamViocs
             .Include(c => c.KhungCa)
             .Include(c => c.NhanVien)
-            .Where(c => c.TrangThaiCa == TrangThaiCaLamViec.DangMo)
+            .Where(c => c.TrangThaiCa == TrangThaiCaLamViec.DangMo);
+
+        if (maNV.HasValue)
+            query = query.Where(c => c.MaNV == maNV.Value);
+
+        return await query
             .OrderByDescending(c => c.ThoiGianMo)
             .ToListAsync();
     }

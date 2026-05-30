@@ -1,5 +1,7 @@
 import { apiClient } from './apiClient';
+import { mapHoaDonListToInvoice, type HoaDonListApi } from './apiMappers';
 import type { Customer } from '@/types';
+import type { Invoice } from '@/types/modules';
 
 export type { Customer };
 
@@ -68,4 +70,14 @@ export async function updateCustomer(
 ): Promise<Customer> {
   const data = await apiClient.put<KhachHangApi>(`/khach-hang/${id}`, payload);
   return mapKhachHangToCustomer(data);
+}
+
+export async function getMyProfile(): Promise<Customer> {
+  const data = await apiClient.get<KhachHangApi>('/khach-hang/me');
+  return mapKhachHangToCustomer(data);
+}
+
+export async function getMyInvoices(limit = 20): Promise<Invoice[]> {
+  const data = await apiClient.get<HoaDonListApi[]>(`/khach-hang/me/hoa-don?limit=${limit}`);
+  return data.map(mapHoaDonListToInvoice);
 }

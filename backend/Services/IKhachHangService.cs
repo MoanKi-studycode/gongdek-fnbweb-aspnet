@@ -7,6 +7,7 @@ public interface IKhachHangService
     Task<List<KhachHangDto>> GetAllAsync(string? search);
     Task<KhachHangDto?> GetByIdAsync(int id);
     Task<KhachHangDto?> GetByPhoneAsync(string phone);
+    Task<KhachHangDto> GetProfileAsync(int maKh);
     Task<KhachHangDto> CreateAsync(CreateKhachHangDto dto);
     Task<KhachHangDto> UpdateAsync(int id, UpdateKhachHangDto dto);
     Task DeleteAsync(int id);

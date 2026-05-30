@@ -1,4 +1,6 @@
 using GongDek_Nhom20.DTOs.KhachHangDtos;
+using GongDek_Nhom20.DTOs.OrderReadDtos;
+using GongDek_Nhom20.Helpers;
 using GongDek_Nhom20.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -10,10 +12,43 @@ namespace GongDek_Nhom20.Controllers;
 public class KhachHangController : ControllerBase
 {
     private readonly IKhachHangService _service;
+    private readonly IHoaDonReadService _hoaDonReadService;
 
-    public KhachHangController(IKhachHangService service)
+    public KhachHangController(IKhachHangService service, IHoaDonReadService hoaDonReadService)
     {
         _service = service;
+        _hoaDonReadService = hoaDonReadService;
+    }
+
+    [HttpGet("me")]
+    [Authorize(Policy = "KhachHang")]
+    public async Task<ActionResult<KhachHangDto>> GetMe()
+    {
+        var maKh = User.GetCustomerId();
+        return Ok(await _service.GetProfileAsync(maKh));
+    }
+
+    [HttpGet("me/hoa-don")]
+    [Authorize(Policy = "KhachHang")]
+    public async Task<ActionResult<List<HoaDonListDto>>> GetMyInvoices([FromQuery] int? limit)
+    {
+        var maKh = User.GetCustomerId();
+        return Ok(await _hoaDonReadService.GetByKhachHangAsync(maKh, limit));
+    }
+
+    [HttpGet("me/hoa-don/{id:int}")]
+    [Authorize(Policy = "KhachHang")]
+    public async Task<ActionResult<HoaDonDetailDto>> GetMyInvoiceById(int id)
+    {
+        try
+        {
+            var maKh = User.GetCustomerId();
+            return Ok(await _hoaDonReadService.GetByIdForKhachHangAsync(maKh, id));
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound(new { message = "Không tìm thấy hóa đơn." });
+        }
     }
 
     [HttpGet]

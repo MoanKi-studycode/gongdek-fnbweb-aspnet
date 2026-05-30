@@ -46,6 +46,9 @@ export interface Invoice {
   total: number;
   paymentMethod: 'Tiền mặt' | 'Chuyển khoản' | 'Ví điện tử';
   createdAt: string;
+  loaiDon?: 'Online' | 'TaiQuay';
+  orderStatus?: OrderStatus;
+  invoiceStatus?: string;
 }
 
 export interface Customer {
