@@ -46,6 +46,35 @@ export interface DongCaRequest {
   ghiChu?: string;
 }
 
+export interface DongCaTomTat {
+  maCa: number;
+  tienQuyDauCa: number;
+  tongTienMatTrongCa: number;
+  tienMatKyVong: number;
+  soHoaDonTienMat: number;
+  tongSoHoaDon: number;
+}
+
+interface DongCaTomTatApi {
+  maCa: number;
+  tienQuyDauCa: number;
+  tongTienMatTrongCa: number;
+  tienMatKyVong: number;
+  soHoaDonTienMat: number;
+  tongSoHoaDon: number;
+}
+
+function mapDongCaTomTat(dto: DongCaTomTatApi): DongCaTomTat {
+  return {
+    maCa: dto.maCa,
+    tienQuyDauCa: dto.tienQuyDauCa,
+    tongTienMatTrongCa: dto.tongTienMatTrongCa,
+    tienMatKyVong: dto.tienMatKyVong,
+    soHoaDonTienMat: dto.soHoaDonTienMat,
+    tongSoHoaDon: dto.tongSoHoaDon,
+  };
+}
+
 /** Nhãn trạng thái ca */
 export function getShiftStatusLabel(status: CaLamViec['trangThaiCa']): string {
   return status === 'DangMo' ? 'Đang mở' : 'Đã đóng';
@@ -55,6 +84,32 @@ export function getShiftStatusLabel(status: CaLamViec['trangThaiCa']): string {
 export function formatTimeSlot(gioBatDau: string, gioKetThuc: string): string {
   const fmt = (t: string) => t.slice(0, 5);
   return `${fmt(gioBatDau)} - ${fmt(gioKetThuc)}`;
+}
+
+/** Kiểm tra giờ hiện tại có nằm trong khung ca (± tolerance phút). */
+export function isKhungCaActiveNow(
+  gioBatDau: string,
+  gioKetThuc: string,
+  toleranceMinutes = 30,
+): boolean {
+  const now = new Date();
+  const nowMinutes = now.getHours() * 60 + now.getMinutes();
+  const start = parseTimeToMinutes(gioBatDau);
+  const end = parseTimeToMinutes(gioKetThuc);
+  return nowMinutes >= start - toleranceMinutes && nowMinutes <= end + toleranceMinutes;
+}
+
+function parseTimeToMinutes(value: string): number {
+  const [h, m] = value.split(':').map(Number);
+  return h * 60 + (m || 0);
+}
+
+/** Cảnh báo khi mở ca ngoài khung giờ quy định. */
+export function getKhungCaTimeWarning(khungCa: KhungCa, toleranceMinutes = 30): string | null {
+  if (isKhungCaActiveNow(khungCa.gioBatDau, khungCa.gioKetThuc, toleranceMinutes)) {
+    return null;
+  }
+  return `Giờ hiện tại nằm ngoài khung ${khungCa.tenCa} (${formatTimeSlot(khungCa.gioBatDau, khungCa.gioKetThuc)}). Bạn vẫn có thể mở ca nếu được phép.`;
 }
 
 /** Gọi API lấy danh sách khung ca */
@@ -88,4 +143,10 @@ export async function moCa(data: MoCaRequest): Promise<CaLamViec> {
 /** Gọi API đóng ca làm việc */
 export async function dongCa(id: number, data: DongCaRequest): Promise<CaLamViec> {
   return apiClient.put<CaLamViec>(`/ca-lam-viec/${id}/dong-ca`, data);
+}
+
+/** Tóm tắt tiền mặt kỳ vọng trước khi đóng ca */
+export async function getDongCaTomTat(id: number): Promise<DongCaTomTat> {
+  const data = await apiClient.get<DongCaTomTatApi>(`/ca-lam-viec/${id}/tom-tat-dong-ca`);
+  return mapDongCaTomTat(data);
 }

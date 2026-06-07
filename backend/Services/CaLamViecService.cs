@@ -1,7 +1,9 @@
+using GongDek_Nhom20.Data;
 using GongDek_Nhom20.DTOs.ShiftDtos;
 using GongDek_Nhom20.Enums;
 using GongDek_Nhom20.Models;
 using GongDek_Nhom20.Repositories;
+using Microsoft.EntityFrameworkCore;
 
 namespace GongDek_Nhom20.Services;
 
@@ -11,15 +13,18 @@ public class CaLamViecService : ICaLamViecService
     private readonly ICaLamViecRepository _caRepository;
     private readonly IKhungCaRepository _khungCaRepository;
     private readonly INhanVienRepository _nhanVienRepository;
+    private readonly GongDekDbContext _context;
 
     public CaLamViecService(
         ICaLamViecRepository caRepository,
         IKhungCaRepository khungCaRepository,
-        INhanVienRepository nhanVienRepository)
+        INhanVienRepository nhanVienRepository,
+        GongDekDbContext context)
     {
         _caRepository = caRepository;
         _khungCaRepository = khungCaRepository;
         _nhanVienRepository = nhanVienRepository;
+        _context = context;
     }
 
     #region Quản lý ca làm việc
@@ -47,6 +52,34 @@ public class CaLamViecService : ICaLamViecService
             ?? throw new KeyNotFoundException("Không tìm thấy ca làm việc.");
 
         return MapToDto(ca);
+    }
+
+    public async Task<DongCaTomTatDto> GetDongCaTomTatAsync(int maCa)
+    {
+        var ca = await _caRepository.GetByIdAsync(maCa)
+            ?? throw new KeyNotFoundException("Không tìm thấy ca làm việc.");
+
+        if (ca.TrangThaiCa != TrangThaiCaLamViec.DangMo)
+            throw new InvalidOperationException("Chỉ tóm tắt được ca đang mở.");
+
+        var hoaDons = await _context.HoaDons
+            .AsNoTracking()
+            .Where(h => h.MaCa == maCa && h.TrangThaiHoaDon != TrangThaiHoaDon.DaHuy)
+            .ToListAsync();
+
+        var tongTienMat = hoaDons
+            .Where(h => h.PhuongThucThanhToan == PhuongThucThanhToan.TienMat)
+            .Sum(h => h.TongThanhToan);
+
+        return new DongCaTomTatDto
+        {
+            MaCa = maCa,
+            TienQuyDauCa = ca.TienQuyDauCa,
+            TongTienMatTrongCa = tongTienMat,
+            TienMatKyVong = ca.TienQuyDauCa + tongTienMat,
+            SoHoaDonTienMat = hoaDons.Count(h => h.PhuongThucThanhToan == PhuongThucThanhToan.TienMat),
+            TongSoHoaDon = hoaDons.Count,
+        };
     }
 
     public async Task<CaLamViecDto> MoCaAsync(MoCaDto dto)

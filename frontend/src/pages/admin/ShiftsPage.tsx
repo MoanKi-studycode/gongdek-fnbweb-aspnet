@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router';
 import { AdminLayout } from '@/components/layout/AdminLayout';
 import { BrandLogo } from '@/components/common/BrandLogo';
@@ -33,17 +33,20 @@ import {
 } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
-import { Plus, Clock, CalendarClock, Lock } from 'lucide-react';
+import { Plus, Clock, CalendarClock, Lock, AlertTriangle } from 'lucide-react';
 import {
   getKhungCaList,
   getCaLamViecList,
   getCaDangMo,
   moCa,
   dongCa,
+  getDongCaTomTat,
+  getKhungCaTimeWarning,
   getShiftStatusLabel,
   formatTimeSlot,
   type KhungCa,
   type CaLamViec,
+  type DongCaTomTat,
 } from '@/services/shiftService';
 import { getEmployees, type Employee } from '@/services/employeeService';
 import { notifyError, notifySuccess, toastMessages } from '@/components/common/ToastMessage';
@@ -86,6 +89,23 @@ export function ShiftsPage({ employeeMode = false }: ShiftsPageProps) {
     tienMatThucTe: '',
     ghiChu: '',
   });
+  const [dongCaSummary, setDongCaSummary] = useState<DongCaTomTat | null>(null);
+  const [dongCaSummaryLoading, setDongCaSummaryLoading] = useState(false);
+
+  const hasOwnOpenShift = staffOnly && openShifts.length > 0;
+
+  const moCaTimeWarning = useMemo(() => {
+    if (!moCaForm.maKhungCa) return null;
+    const khungCa = khungCas.find((kc) => String(kc.maKhungCa) === moCaForm.maKhungCa);
+    return khungCa ? getKhungCaTimeWarning(khungCa) : null;
+  }, [khungCas, moCaForm.maKhungCa]);
+
+  const dongCaChenhLech = useMemo(() => {
+    if (!dongCaSummary) return null;
+    const thucTe = Number(dongCaForm.tienMatThucTe);
+    if (Number.isNaN(thucTe)) return null;
+    return thucTe - dongCaSummary.tienMatKyVong;
+  }, [dongCaSummary, dongCaForm.tienMatThucTe]);
 
   const formatPrice = (price: number) =>
     new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
@@ -181,10 +201,25 @@ export function ShiftsPage({ employeeMode = false }: ShiftsPageProps) {
     }
   };
 
-  const handleOpenDongCa = (shift: CaLamViec) => {
+  const handleOpenDongCa = async (shift: CaLamViec) => {
     setSelectedShift(shift);
     setDongCaForm({ tienMatThucTe: String(shift.tienQuyDauCa), ghiChu: '' });
+    setDongCaSummary(null);
     setIsDongCaOpen(true);
+    setDongCaSummaryLoading(true);
+    try {
+      const summary = await getDongCaTomTat(shift.maCa);
+      setDongCaSummary(summary);
+      setDongCaForm({
+        tienMatThucTe: String(summary.tienMatKyVong),
+        ghiChu: '',
+      });
+    } catch (err) {
+      notifyError(err, 'Không thể tải tóm tắt đóng ca.');
+      setDongCaForm({ tienMatThucTe: String(shift.tienQuyDauCa), ghiChu: '' });
+    } finally {
+      setDongCaSummaryLoading(false);
+    }
   };
 
   const handleSubmitDongCa = async (e: React.FormEvent) => {
@@ -294,13 +329,23 @@ export function ShiftsPage({ employeeMode = false }: ShiftsPageProps) {
             <Button
               onClick={handleOpenMoCa}
               className="bg-[#8B7355] hover:bg-[#6F5B44]"
-              disabled={khungCas.length === 0 || (!staffOnly && employees.length === 0)}
+              disabled={
+                khungCas.length === 0 ||
+                (!staffOnly && employees.length === 0) ||
+                hasOwnOpenShift
+              }
             >
               <Plus className="w-4 h-4 mr-2" />
               Mở ca
             </Button>
           </div>
         </div>
+
+        {hasOwnOpenShift && (
+          <div className="mb-6 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+            Bạn đang có ca mở. Vui lòng <strong>đóng ca</strong> trước khi mở ca mới.
+          </div>
+        )}
 
         {/* Khung ca tham chiếu */}
         <Card className="mb-6">
@@ -483,6 +528,12 @@ export function ShiftsPage({ employeeMode = false }: ShiftsPageProps) {
                   </Select>
                 </div>
               )}
+              {moCaTimeWarning && (
+                <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900 flex gap-2">
+                  <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+                  <span>{moCaTimeWarning}</span>
+                </div>
+              )}
               <div className="space-y-2">
                 <Label htmlFor="tienQuyDauCa">Tiền quỹ đầu ca (VNĐ) *</Label>
                 <Input
@@ -516,7 +567,13 @@ export function ShiftsPage({ employeeMode = false }: ShiftsPageProps) {
         </Dialog>
 
         {/* Dialog đóng ca */}
-        <Dialog open={isDongCaOpen} onOpenChange={setIsDongCaOpen}>
+        <Dialog open={isDongCaOpen} onOpenChange={(open) => {
+          setIsDongCaOpen(open);
+          if (!open) {
+            setSelectedShift(null);
+            setDongCaSummary(null);
+          }
+        }}>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Đóng ca làm việc</DialogTitle>
@@ -526,7 +583,34 @@ export function ShiftsPage({ employeeMode = false }: ShiftsPageProps) {
                   : 'Nhập tiền mặt thực tế khi đóng ca'}
               </DialogDescription>
             </DialogHeader>
+            {dongCaSummaryLoading ? (
+              <div className="flex justify-center py-8">
+                <LoadingSpinner />
+              </div>
+            ) : (
             <form onSubmit={handleSubmitDongCa} className="space-y-4">
+              {dongCaSummary && (
+                <div className="grid grid-cols-2 gap-3 rounded-lg bg-[#FAF8F3] p-4 text-sm">
+                  <div>
+                    <p className="text-gray-600">Quỹ đầu ca</p>
+                    <p className="font-semibold">{formatPrice(dongCaSummary.tienQuyDauCa)}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-600">Doanh thu tiền mặt</p>
+                    <p className="font-semibold">{formatPrice(dongCaSummary.tongTienMatTrongCa)}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-600">Hóa đơn tiền mặt</p>
+                    <p className="font-semibold">
+                      {dongCaSummary.soHoaDonTienMat} / {dongCaSummary.tongSoHoaDon} đơn
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-gray-600">Tiền mặt kỳ vọng</p>
+                    <p className="font-semibold text-[#8B7355]">{formatPrice(dongCaSummary.tienMatKyVong)}</p>
+                  </div>
+                </div>
+              )}
               <div className="space-y-2">
                 <Label htmlFor="tienMatThucTe">Tiền mặt thực tế (VNĐ) *</Label>
                 <Input
@@ -537,6 +621,22 @@ export function ShiftsPage({ employeeMode = false }: ShiftsPageProps) {
                   onChange={(e) => setDongCaForm({ ...dongCaForm, tienMatThucTe: e.target.value })}
                   required
                 />
+                {dongCaChenhLech != null && dongCaSummary && (
+                  <p
+                    className={`text-sm ${
+                      dongCaChenhLech === 0
+                        ? 'text-green-700'
+                        : Math.abs(dongCaChenhLech) <= 10000
+                          ? 'text-amber-700'
+                          : 'text-red-600'
+                    }`}
+                  >
+                    Chênh lệch so với kỳ vọng:{' '}
+                    {dongCaChenhLech === 0
+                      ? 'Khớp'
+                      : `${dongCaChenhLech > 0 ? '+' : ''}${formatPrice(dongCaChenhLech)}`}
+                  </p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="ghiChuDongCa">Ghi chú</Label>
@@ -556,6 +656,7 @@ export function ShiftsPage({ employeeMode = false }: ShiftsPageProps) {
                 </Button>
               </div>
             </form>
+            )}
           </DialogContent>
         </Dialog>
       </div>

@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router';
 import { usePOS } from '@/contexts/POSContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -7,8 +7,10 @@ import { getToppings } from '@/services/toppingService';
 import { findCustomerByPhone } from '@/services/customerService';
 import { findVoucherByCode, isVoucherValid } from '@/services/voucherService';
 import { posCheckout } from '@/services/onlineOrderService';
+import { getCaDangMo, type CaLamViec } from '@/services/shiftService';
 import { Product, Topping } from '@/types';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -16,7 +18,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
-import { Search, LogOut, Trash2, Edit, Plus, Minus, ShoppingBag, Package, Receipt } from 'lucide-react';
+import { Search, LogOut, Trash2, Edit, Plus, Minus, ShoppingBag, Package, Receipt, Clock, AlertTriangle } from 'lucide-react';
 import { logoutConfirmOptions, useConfirm } from '@/components/common/ConfirmDialog';
 import { toast } from 'sonner';
 import { Link } from 'react-router';
@@ -55,6 +57,24 @@ export function POSPage() {
   const [customerPhone, setCustomerPhone] = useState('');
   const [voucherCode, setVoucherCode] = useState('');
   const [checkoutSuccess, setCheckoutSuccess] = useState(false);
+  const [openShift, setOpenShift] = useState<CaLamViec | null>(null);
+  const [shiftLoading, setShiftLoading] = useState(true);
+
+  const loadOpenShift = useCallback(async () => {
+    setShiftLoading(true);
+    try {
+      const shifts = await getCaDangMo();
+      setOpenShift(shifts[0] ?? null);
+    } catch {
+      setOpenShift(null);
+    } finally {
+      setShiftLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadOpenShift();
+  }, [loadOpenShift]);
   const [productList, setProductList] = useState<Product[]>([]);
   const [availableToppings, setAvailableToppings] = useState<Topping[]>([]);
   const [catalogLoading, setCatalogLoading] = useState(true);
@@ -177,6 +197,11 @@ export function POSPage() {
       return;
     }
 
+    if (!openShift) {
+      toast.error('Bạn chưa mở ca làm việc. Vui lòng mở ca trước khi thanh toán.');
+      return;
+    }
+
     const paymentMap = {
       cash: 'TienMat' as const,
       transfer: 'ChuyenKhoan' as const,
@@ -206,6 +231,7 @@ export function POSPage() {
           onClick: () => navigate('/employee/invoices'),
         },
       });
+      await loadOpenShift();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Thanh toán thất bại');
     } finally {
@@ -234,6 +260,19 @@ export function POSPage() {
               <p className="text-sm text-gray-600">
                 {user?.hoTen ?? 'Nhan vien'}
               </p>
+              {!shiftLoading && (
+                openShift ? (
+                  <Badge className="mt-1 bg-green-100 text-green-800 hover:bg-green-100">
+                    <Clock className="w-3 h-3 mr-1" />
+                    {openShift.tenCa} — đang mở ca
+                  </Badge>
+                ) : (
+                  <Badge variant="outline" className="mt-1 border-amber-300 text-amber-800">
+                    <AlertTriangle className="w-3 h-3 mr-1" />
+                    Chưa mở ca
+                  </Badge>
+                )
+              )}
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -268,6 +307,18 @@ export function POSPage() {
       </header>
 
       {/* Main Content - 3 Columns */}
+      {!shiftLoading && !openShift && (
+        <div className="mx-4 mt-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 flex items-center justify-between gap-3">
+          <p className="text-sm text-amber-900">
+            Bạn cần <strong>mở ca làm việc</strong> trước khi thanh toán tại quầy.
+          </p>
+          <Link to="/employee/shifts">
+            <Button size="sm" className="bg-[#8B7355] hover:bg-[#6F5B44] shrink-0">
+              Mở ca ngay
+            </Button>
+          </Link>
+        </div>
+      )}
       <div className="flex-1 grid grid-cols-12 gap-4 p-4 overflow-hidden">
         {/* LEFT COLUMN - Products */}
         <div className="col-span-4 bg-white rounded-lg shadow-md p-4 flex flex-col overflow-hidden">
@@ -497,10 +548,19 @@ export function POSPage() {
           <Button
             onClick={handleCheckout}
             className="w-full bg-[#8B7355] hover:bg-[#6F5B44] text-white py-6 text-lg font-bold mt-4"
-            disabled={orderItems.length === 0 || checkoutSuccess}
+            disabled={orderItems.length === 0 || checkoutSuccess || shiftLoading || !openShift}
           >
-            {checkoutSuccess ? 'Đang xử lý...' : 'THANH TOÁN'}
+            {checkoutSuccess ? 'Đang xử lý...' : !openShift ? 'MỞ CA TRƯỚC KHI THANH TOÁN' : 'THANH TOÁN'}
           </Button>
+          {openShift && (
+            <p className="text-xs text-gray-500 text-center mt-2">
+              Ca {openShift.tenCa} · Mở lúc{' '}
+              {new Date(openShift.thoiGianMo).toLocaleTimeString('vi-VN', {
+                hour: '2-digit',
+                minute: '2-digit',
+              })}
+            </p>
+          )}
         </div>
       </div>
 

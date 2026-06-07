@@ -57,6 +57,29 @@ public class CaLamViecController : ControllerBase
         return Ok(result);
     }
 
+    /// <summary>GET /api/ca-lam-viec/{id}/tom-tat-dong-ca — tóm tắt tiền mặt trước khi đóng ca.</summary>
+    [HttpGet("{id:int}/tom-tat-dong-ca")]
+    [Authorize(Policy = "NoiBo")]
+    public async Task<ActionResult<DongCaTomTatDto>> GetDongCaTomTat(int id)
+    {
+        var existing = await _caLamViecService.GetByIdAsync(id);
+        if (!User.IsQuanLy() && existing.MaNV != User.GetStaffId())
+            return Forbid();
+
+        try
+        {
+            return Ok(await _caLamViecService.GetDongCaTomTatAsync(id));
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound(new { message = "Không tìm thấy ca làm việc." });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
     /// <summary>POST /api/ca-lam-viec/mo-ca — mở ca (Nhân viên chỉ mở ca cho chính mình).</summary>
     [HttpPost("mo-ca")]
     [Authorize(Policy = "NoiBo")]

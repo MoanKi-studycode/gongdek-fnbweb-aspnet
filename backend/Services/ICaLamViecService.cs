@@ -14,6 +14,7 @@ public interface ICaLamViecService
 
     Task<List<CaLamViecDto>> GetDangMoAsync(int? maNV = null);
     Task<CaLamViecDto> GetByIdAsync(int maCa);
+    Task<DongCaTomTatDto> GetDongCaTomTatAsync(int maCa);
     Task<CaLamViecDto> MoCaAsync(MoCaDto dto);
     Task<CaLamViecDto> DongCaAsync(int maCa, DongCaDto dto);
 }
